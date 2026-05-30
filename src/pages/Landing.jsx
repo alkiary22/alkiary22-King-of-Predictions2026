@@ -1,0 +1,238 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useContent } from "../context/ContentContext";
+import { Crown, Trophy, Target, ChevronLeft, Sparkles, TrendingUp, CalendarDays, Flame } from "lucide-react";
+
+const HERO_BG =
+  "https://static.prod-images.emergentagent.com/jobs/36ca7cb1-56bf-4cbb-a9df-d07fc64af674/images/cf694e18d81a1e3b6118c5df05310e8b849aa4f259b4293ec8caeb6d2c40b94f.png";
+
+// Countdown to FIFA World Cup 2026 opening (Mexico vs South Africa, June 11 2026 22:00 Mecca = 19:00 UTC)
+const WC_OPENING_UTC = new Date("2026-06-11T19:00:00Z").getTime();
+
+function getCountdown() {
+  const diff = Math.max(0, WC_OPENING_UTC - Date.now());
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  return { days, hours, minutes, started: diff <= 0 };
+}
+
+export default function Landing() {
+  const { user } = useAuth();
+  const { t } = useContent();
+  const [cd, setCd] = useState(getCountdown());
+
+  useEffect(() => {
+    const id = setInterval(() => setCd(getCountdown()), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-base text-white" data-testid="landing-page">
+      {/* Hero */}
+      <section className="relative overflow-hidden min-h-[88vh] flex items-center">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-50"
+          style={{ backgroundImage: `url(${HERO_BG})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A]/40 via-[#0A0A0A]/70 to-[#0A0A0A]" />
+
+        {/* Decorative glow */}
+        <div className="absolute -top-32 right-1/2 translate-x-1/2 w-[40rem] h-[40rem] rounded-full bg-gold/10 blur-[120px] pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Crown badge */}
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gold shadow-[0_0_50px_rgba(255,215,0,0.5)] mb-6 animate-fade-in-up">
+              <Crown className="w-11 h-11 text-black" strokeWidth={2.3} />
+            </div>
+
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/30 mb-6 animate-fade-in-up">
+              <Sparkles className="w-4 h-4 text-gold" />
+              <span className="text-xs font-bold text-gold uppercase tracking-[0.25em]">
+                {t("landing_badge")}
+              </span>
+              <Sparkles className="w-4 h-4 text-gold" />
+            </div>
+
+            {user ? (
+              <>
+                <p className="text-base sm:text-lg text-zinc-300 mb-3 animate-fade-in-up">
+                  أهلاً بعودتك يا
+                </p>
+                <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-black text-gold mb-4 animate-fade-in-up drop-shadow-[0_0_30px_rgba(255,215,0,0.3)]">
+                  {user.name}
+                </h1>
+                <p className="text-lg sm:text-2xl text-zinc-200 mb-3 animate-fade-in-up">
+                  رصيدك: <span className="text-gold font-display font-black text-3xl mx-2">{user.total_points}</span> نقطة
+                </p>
+              </>
+            ) : (
+              <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-black leading-[1.05] mb-6 animate-fade-in-up">
+                <span className="text-white">{t("landing_hero_line1")}</span>
+                <br />
+                <span className="text-gold drop-shadow-[0_0_30px_rgba(255,215,0,0.4)]">
+                  {t("landing_hero_line2_strong")}
+                </span>
+                <br />
+                <span className="italic text-white/95">{t("landing_hero_line3_italic")}</span>
+              </h1>
+            )}
+
+            <p className="text-base sm:text-xl text-zinc-300 leading-relaxed mb-8 max-w-2xl mx-auto animate-fade-in-up">
+              {user
+                ? "كأس العالم 2026 على الأبواب — جاهز لتحطيم رقمك القياسي؟"
+                : t("landing_hero_desc")}
+            </p>
+
+            {/* WC Countdown */}
+            {!cd.started && (
+              <div className="inline-flex items-center gap-4 sm:gap-6 px-6 py-4 rounded-2xl bg-black/40 backdrop-blur-md border border-gold/20 mb-10 animate-fade-in-up" data-testid="wc-countdown">
+                <div className="text-center">
+                  <p className="text-[10px] text-zinc-400 mb-1 uppercase tracking-widest">المباراة الافتتاحية بعد</p>
+                  <div className="flex items-center gap-3 sm:gap-5 justify-center">
+                    <Slot value={cd.days} label="يوم" />
+                    <span className="text-gold/40 text-2xl font-black">:</span>
+                    <Slot value={cd.hours} label="ساعة" />
+                    <span className="text-gold/40 text-2xl font-black">:</span>
+                    <Slot value={cd.minutes} label="دقيقة" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CTAs */}
+            <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up">
+              {user ? (
+                <>
+                  <Link
+                    to="/matches"
+                    data-testid="cta-go-to-matches"
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gold text-black font-bold text-base hover:bg-yellow-400 active:scale-95 transition-all shadow-[0_8px_40px_rgba(255,215,0,0.35)]"
+                  >
+                    <Flame className="w-5 h-5" />
+                    {t("landing_cta_authenticated")}
+                    <ChevronLeft className="w-5 h-5" />
+                  </Link>
+                  <Link
+                    to="/leaderboard"
+                    className="inline-flex items-center gap-2 px-7 py-4 rounded-xl border border-gold/30 bg-black/30 backdrop-blur text-white font-bold hover:bg-gold/10 transition-colors"
+                  >
+                    <Trophy className="w-5 h-5 text-gold" />
+                    لوحة المتصدرين
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/register"
+                    data-testid="cta-register"
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gold text-black font-bold text-base hover:bg-yellow-400 active:scale-95 transition-all shadow-[0_8px_40px_rgba(255,215,0,0.35)]"
+                  >
+                    {t("landing_cta_register")}
+                    <ChevronLeft className="w-5 h-5" />
+                  </Link>
+                  <Link
+                    to="/login"
+                    data-testid="cta-login"
+                    className="inline-flex items-center gap-2 px-7 py-4 rounded-xl border border-white/20 bg-black/30 backdrop-blur text-white font-medium hover:bg-white/5 transition-colors"
+                  >
+                    {t("landing_cta_login")}
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {!user && (
+              <p className="text-xs text-zinc-500 mt-6 animate-fade-in-up">
+                مجاني تماماً • انضم لآلاف المتسابقين • نافس على لقب الملك
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <FeatureCard icon={Target} title={t("feature_1_title")} desc={t("feature_1_desc")} />
+          <FeatureCard icon={Trophy} title={t("feature_2_title")} desc={t("feature_2_desc")} />
+          <FeatureCard icon={CalendarDays} title={t("feature_3_title")} desc={t("feature_3_desc")} />
+        </div>
+
+        {/* Scoring explainer */}
+        <div className="mt-16 glass-card rounded-2xl p-8 lg:p-12 relative overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 mb-4 text-gold">
+                <TrendingUp className="w-5 h-5" />
+                <span className="text-xs font-bold uppercase tracking-widest">{t("scoring_pretitle")}</span>
+              </div>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6">
+                {t("scoring_title")}
+              </h2>
+              <ul className="space-y-4">
+                <ScoreItem badge="+3" title={t("scoring_3_title")} desc={t("scoring_3_desc")} variant="gold" />
+                <ScoreItem badge="+1" title={t("scoring_1_title")} desc={t("scoring_1_desc")} variant="neutral" />
+                <ScoreItem badge="0" title={t("scoring_0_title")} desc={t("scoring_0_desc")} variant="muted" />
+              </ul>
+            </div>
+            <div className="relative">
+              <div className="aspect-square rounded-2xl bg-gradient-to-br from-gold/20 via-transparent to-transparent border border-gold/10 flex items-center justify-center">
+                <Crown className="w-48 h-48 text-gold drop-shadow-[0_0_40px_rgba(255,215,0,0.4)]" strokeWidth={1.2} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-white/5 py-8 text-center text-sm text-zinc-500">
+        {t("footer_text")}
+      </footer>
+    </div>
+  );
+}
+
+function Slot({ value, label }) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className="font-display text-3xl sm:text-4xl font-black text-gold tabular-nums">
+        {String(value).padStart(2, "0")}
+      </span>
+      <span className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">{label}</span>
+    </div>
+  );
+}
+
+function ScoreItem({ badge, title, desc, variant }) {
+  const cls =
+    variant === "gold"
+      ? "bg-gold text-black"
+      : variant === "neutral"
+      ? "bg-white/10 text-white"
+      : "bg-white/5 text-zinc-500";
+  return (
+    <li className="flex items-start gap-4">
+      <span className={`shrink-0 w-12 h-12 rounded-full font-black flex items-center justify-center text-lg ${cls}`}>
+        {badge}
+      </span>
+      <div>
+        <p className="font-bold text-base">{title}</p>
+        <p className="text-sm text-zinc-400">{desc}</p>
+      </div>
+    </li>
+  );
+}
+
+function FeatureCard({ icon: Icon, title, desc }) {
+  return (
+    <div className="glass-card rounded-2xl p-7 hover:-translate-y-1 hover:border-gold/30 transition-all">
+      <div className="w-12 h-12 rounded-xl bg-gold/15 flex items-center justify-center mb-5">
+        <Icon className="w-6 h-6 text-gold" />
+      </div>
+      <h3 className="font-display text-xl font-bold mb-2">{title}</h3>
+      <p className="text-sm text-zinc-400 leading-relaxed">{desc}</p>
+    </div>
+  );
+}
