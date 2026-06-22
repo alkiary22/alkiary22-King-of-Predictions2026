@@ -15,6 +15,7 @@ import Teams from "@/pages/Teams";
 import Leaderboard from "@/pages/Leaderboard";
 import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
+import UserPredictions from "@/pages/UserPredictions";
 
 function Layout({ children }) {
   return (
@@ -41,6 +42,7 @@ function App() {
               <Route path="/matches" element={<Layout><Matches /></Layout>} />
               <Route path="/teams" element={<Layout><Teams /></Layout>} />
               <Route path="/leaderboard" element={<Layout><Leaderboard /></Layout>} />
+              <Route path="/user-predictions" element={<Layout><UserPredictions /></Layout>} />
               <Route
                 path="/profile"
                 element={

@@ -23,6 +23,7 @@ export default function Header() {
     { to: "/matches", label: "المباريات", icon: Calendar },
     { to: "/teams", label: "المنتخبات", icon: Flag },
     { to: "/leaderboard", label: "المتصدرين", icon: Trophy },
+    { to: "/user-predictions", label: "توقعات المستخدمين", icon: Trophy },
   ];
   if (user) links.push({ to: "/profile", label: "حسابي", icon: User });
   if (user?.role === "admin" || user?.role === "supervisor") links.push({ to: "/admin", label: "لوحة الإدارة", icon: ShieldCheck });
