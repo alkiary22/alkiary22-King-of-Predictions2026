@@ -18,7 +18,8 @@ export function AuthProvider({ children }) {
       const { data } = await api.get("/auth/me");
       setUser(data);
     } catch (e) {
-      localStorage.removeItem("mt_token");
+      // لا نحذف التوكن عند فشل مؤقت من السيرفر
+      console.error("fetchMe failed:", e);
       setUser(null);
     } finally {
       setLoading(false);

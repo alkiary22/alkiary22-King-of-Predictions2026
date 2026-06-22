@@ -140,23 +140,15 @@ export default function Matches() {
       </div>
 
       {availableDates.length > 0 && (
-        <div className="mb-8" data-testid="date-filters">
-          <label className="block text-xs font-bold text-zinc-400 mb-2">
-            اختر تاريخ المباريات
-          </label>
-
-          <select
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full bg-black/50 border border-white/10 rounded-2xl px-4 py-4 text-white font-bold outline-none focus:border-gold"
-          >
-            <option value="ALL">كل التواريخ</option>
-            {availableDates.map((d) => (
-              <option key={d} value={d}>
-                {formatDateAr(d)}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap gap-2 mb-8" data-testid="date-filters">
+          <FilterBtn current={selectedDate} value="ALL" onClick={setSelectedDate}>
+            كل التواريخ
+          </FilterBtn>
+          {availableDates.map((d) => (
+            <FilterBtn key={d} current={selectedDate} value={d} onClick={setSelectedDate}>
+              {formatDateAr(d)}
+            </FilterBtn>
+          ))}
         </div>
       )}
 

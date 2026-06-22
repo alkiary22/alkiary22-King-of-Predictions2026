@@ -1,5 +1,5 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import { AuthProvider } from "@/context/AuthContext";
@@ -15,7 +15,8 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Matches from "@/pages/Matches";
-import UserPredictions from "@/pages/UserPredictions";
+import Live from "@/pages/Live";
+import Chat from "@/pages/Chat";
 import Teams from "@/pages/Teams";
 import Leaderboard from "@/pages/Leaderboard";
 import Profile from "@/pages/Profile";
@@ -27,7 +28,6 @@ function Layout({ children }) {
       <Header />
       <ClockWarning />
       {children}
-
     </>
   );
 }
@@ -46,7 +46,8 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/matches" element={<Layout><Matches /></Layout>} />
-                <Route path="/user-predictions" element={<Layout><UserPredictions /></Layout>} />
+                <Route path="/live" element={<Layout><Live /></Layout>} />
+                <Route path="/chat" element={<Layout><Chat /></Layout>} />
                 <Route path="/teams" element={<Layout><Teams /></Layout>} />
                 <Route path="/leaderboard" element={<Layout><Leaderboard /></Layout>} />
                 <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />

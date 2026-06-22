@@ -1,0 +1,35 @@
+import React from "react";
+
+export default function UserPredictions() {
+  return (
+    <div dir="rtl" style={{
+      minHeight: "100vh",
+      background: "#f6f7fb",
+      color: "#111",
+      padding: 16
+    }}>
+      <div style={{
+        background: "linear-gradient(135deg,#14532d,#16a34a)",
+        color: "#fff",
+        padding: 18,
+        borderRadius: 18,
+        marginBottom: 16
+      }}>
+        <h2 style={{ margin: 0 }}>توقعات المستخدمين</h2>
+        <p style={{ margin: "8px 0 0" }}>
+          تظهر توقعات جميع المستخدمين بعد بداية المباراة فقط.
+        </p>
+      </div>
+
+      <div style={{
+        background: "#fff",
+        color: "#111",
+        border: "1px solid #ddd",
+        borderRadius: 14,
+        padding: 15
+      }}>
+        توقعات المستخدمين ستظهر هنا عند بداية المباراة.
+      </div>
+    </div>
+  );
+}

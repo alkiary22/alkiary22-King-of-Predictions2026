@@ -1,8 +1,8 @@
-import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTeams } from "../context/TeamsContext";
 import { useContent } from "../context/ContentContext";
-import { Crown, Trophy, Calendar, Flag, User, LogOut, ShieldCheck, Menu, X, Radio, MessageCircle } from "lucide-react";
+import { Crown, Trophy, Calendar, Flag, User, LogOut, ShieldCheck, Menu, X, Radio } from "lucide-react";
 import { useState } from "react";
 import NotificationBell from "./NotificationBell";
 import Avatar from "./Avatar";
@@ -12,8 +12,6 @@ export default function Header() {
   const { teamsMap } = useTeams();
   const { t } = useContent();
   const navigate = useNavigate();
-  const location = useLocation();
-  const isHome = location.pathname === "/";
   const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
@@ -23,7 +21,7 @@ export default function Header() {
 
   const links = [
     { to: "/matches", label: "المباريات", icon: Calendar },
-    { to: "/user-predictions", label: "توقعات المستخدمين", icon: Radio },
+    { to: "/live", label: "البث الحي", icon: Radio },
     { to: "/teams", label: "المنتخبات", icon: Flag },
     { to: "/leaderboard", label: "المتصدرين", icon: Trophy },
   ];
@@ -115,22 +113,6 @@ export default function Header() {
           </button>
         </div>
       </nav>
-
-      {isHome && (
-        <div className="border-b border-gold/20 bg-black overflow-hidden">
-          <div className="relative h-11 flex items-center">
-            <div className="whitespace-nowrap animate-[marquee_18s_linear_infinite] text-gold font-black text-sm sm:text-base">
-              🏆 الرعاة الرسميون لجائزة ملك التوقعات | ⭐ قيس العدار | ⭐ الياس الخياري | 🏆
-            </div>
-          </div>
-          <style>{`
-            @keyframes marquee {
-              0% { transform: translateX(-100%); }
-              100% { transform: translateX(100%); }
-            }
-          `}</style>
-        </div>
-      )}
 
       {open && (
         <div className="md:hidden border-t border-white/10 bg-[#0A0A0A] px-4 py-4 flex flex-col gap-2">

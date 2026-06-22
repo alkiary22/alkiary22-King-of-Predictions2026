@@ -99,7 +99,6 @@ export default function AvatarUploader({ user, onUpdated }) {
         ref={fileRef}
         type="file"
         accept="image/*"
-        capture="user"
         className="hidden"
         onChange={onFile}
         data-testid="avatar-file-input"

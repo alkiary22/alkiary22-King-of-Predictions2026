@@ -66,24 +66,6 @@ export default function Admin() {
     reload();
   }, [reload]);
 
-  const handleEditTime = async (match) => {
-    const current = match.kickoff || "";
-    const value = window.prompt(
-      "أدخل وقت المباراة بهذه الصيغة:\n2026-06-12T05:00:00+03:00",
-      current
-    );
-
-    if (!value) return;
-
-    try {
-      await api.patch(`/admin/matches/${match.id}/time`, { kickoff: value });
-      toast.success("تم تعديل وقت المباراة");
-      reload();
-    } catch (e) {
-      toast.error(apiErrorMessage(e));
-    }
-  };
-
   const handleDelete = async (id) => {
     if (!window.confirm("هل أنت متأكد من حذف هذه المباراة؟ سيتم حذف كل التوقعات المرتبطة بها.")) return;
     try {
@@ -115,9 +97,8 @@ export default function Admin() {
     setSyncing(true);
     try {
       const { data } = await api.post("/admin/import-new-fixtures");
-      alert(`تمت العملية بنجاح\nتمت إضافة: ${data?.created || 0} مباراة\nتم تخطي: ${data?.skipped || 0} مباراة`);
       toast.success(data?.message || `تم استيراد ${data?.created || 0} مباراة جديدة`);
-      await reload();
+      reload();
     } catch (e) {
       toast.error(apiErrorMessage(e));
     } finally {
@@ -216,7 +197,6 @@ export default function Admin() {
           onSeed={handleSeedFixtures}
           onAdd={() => setCreateOpen(true)}
           onResult={(m) => setResultModal(m)}
-          onEditTime={handleEditTime}
           onDelete={handleDelete}
           isFullAdmin={isFullAdmin}
         />
@@ -267,7 +247,7 @@ function TabBtn({ active, onClick, children, testId }) {
   );
 }
 
-function MatchesTab({ loading, matches, teams, lastSync, onSync, syncing, onImportNew, onSeed, onAdd, onResult, onEditTime, onDelete, isFullAdmin }) {
+function MatchesTab({ loading, matches, teams, lastSync, onSync, syncing, onImportNew, onSeed, onAdd, onResult, onDelete, isFullAdmin }) {
   return (
     <>
       <div className="flex items-start justify-between flex-col md:flex-row gap-4 mb-6">
@@ -400,13 +380,6 @@ function MatchesTab({ loading, matches, teams, lastSync, onSync, syncing, onImpo
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           {m.status === "finished" ? "تعديل النتيجة" : "إدخال النتيجة"}
-                        </button>
-                        <button
-                          onClick={() => onEditTime(m)}
-                          data-testid={`edit-time-${m.id}`}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-blue-500/10 text-blue-400 text-xs font-bold hover:bg-blue-500/20"
-                        >
-                          تعديل الوقت
                         </button>
                         <button
                           onClick={() => onDelete(m.id)}
@@ -654,7 +627,7 @@ function CreateMatchModal({ teams, onClose, onCreated }) {
         home_team: home,
         away_team: away,
         match_date: date,
-        kickoff: `${kickoff}:00+03:00`,
+        kickoff: new Date(kickoff).toISOString(),
         stage,
         group_name: groupName || null,
       });

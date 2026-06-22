@@ -15,7 +15,7 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Matches from "@/pages/Matches";
-import UserPredictions from "@/pages/UserPredictions";
+import Live from "@/pages/Live";
 import Teams from "@/pages/Teams";
 import Leaderboard from "@/pages/Leaderboard";
 import Profile from "@/pages/Profile";
@@ -46,7 +46,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/matches" element={<Layout><Matches /></Layout>} />
-                <Route path="/user-predictions" element={<Layout><UserPredictions /></Layout>} />
+                <Route path="/live" element={<Layout><Live /></Layout>} />
                 <Route path="/teams" element={<Layout><Teams /></Layout>} />
                 <Route path="/leaderboard" element={<Layout><Leaderboard /></Layout>} />
                 <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />

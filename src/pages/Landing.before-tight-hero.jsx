@@ -32,7 +32,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-base text-white" data-testid="landing-page">
       {/* Hero */}
-      <section className="relative overflow-hidden min-h-[78vh] flex items-start pt-5">
+      <section className="relative overflow-hidden min-h-[88vh] flex items-center">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-50"
           style={{ backgroundImage: `url(${HERO_BG})` }}
@@ -42,16 +42,16 @@ export default function Landing() {
         {/* Decorative glow */}
         <div className="absolute -top-32 right-1/2 translate-x-1/2 w-[40rem] h-[40rem] rounded-full bg-gold/10 blur-[120px] pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 w-full">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
           <div className="max-w-4xl mx-auto text-center">
             <AdSlider />
 
             {/* Crown badge */}
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gold shadow-[0_0_50px_rgba(255,215,0,0.5)] mb-2 animate-fade-in-up">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gold shadow-[0_0_50px_rgba(255,215,0,0.5)] mb-6 animate-fade-in-up">
               <Crown className="w-11 h-11 text-black" strokeWidth={2.3} />
             </div>
 
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/30 mb-2 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/30 mb-6 animate-fade-in-up">
               <Sparkles className="w-4 h-4 text-gold" />
               <span className="text-xs font-bold text-gold uppercase tracking-[0.25em]">
                 {t("landing_badge")}
@@ -61,18 +61,18 @@ export default function Landing() {
 
             {user ? (
               <>
-                <p className="text-base sm:text-lg text-zinc-300 mb-2 animate-fade-in-up">
+                <p className="text-base sm:text-lg text-zinc-300 mb-3 animate-fade-in-up">
                   أهلاً بعودتك يا
                 </p>
-                <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-black text-gold mb-2 animate-fade-in-up drop-shadow-[0_0_30px_rgba(255,215,0,0.3)]">
+                <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-black text-gold mb-4 animate-fade-in-up drop-shadow-[0_0_30px_rgba(255,215,0,0.3)]">
                   {user.name}
                 </h1>
-                <p className="text-lg sm:text-2xl text-zinc-200 mb-2 animate-fade-in-up">
+                <p className="text-lg sm:text-2xl text-zinc-200 mb-3 animate-fade-in-up">
                   رصيدك: <span className="text-gold font-display font-black text-3xl mx-2">{user.total_points}</span> نقطة
                 </p>
               </>
             ) : (
-              <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-black leading-[1.05] mb-2 animate-fade-in-up">
+              <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-black leading-[1.05] mb-6 animate-fade-in-up">
                 <span className="text-white">{t("landing_hero_line1")}</span>
                 <br />
                 <span className="text-gold drop-shadow-[0_0_30px_rgba(255,215,0,0.4)]">

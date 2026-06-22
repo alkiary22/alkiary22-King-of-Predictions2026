@@ -3,7 +3,6 @@ import api, { apiErrorMessage } from "../lib/api";
 import { getServerNow } from "../lib/serverTime";
 import Flag from "../components/Flag";
 import Countdown from "../components/Countdown";
-import AdSlider from "../components/AdSlider";
 import { useAuth } from "../context/AuthContext";
 import { useContent } from "../context/ContentContext";
 import { Link } from "react-router-dom";
@@ -102,7 +101,6 @@ export default function Matches() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" data-testid="matches-page">
-      <AdSlider />
       <div className="sticky top-16 z-40 mb-6 border border-gold/20 bg-black/95 backdrop-blur rounded-2xl overflow-hidden shadow-[0_0_25px_rgba(255,215,0,0.15)]">
         <div className="relative h-12 flex items-center overflow-hidden">
           <div className="whitespace-nowrap text-gold font-black text-sm sm:text-base" style={{ animation: "matchesMarquee 18s linear infinite" }}>
@@ -140,23 +138,15 @@ export default function Matches() {
       </div>
 
       {availableDates.length > 0 && (
-        <div className="mb-8" data-testid="date-filters">
-          <label className="block text-xs font-bold text-zinc-400 mb-2">
-            اختر تاريخ المباريات
-          </label>
-
-          <select
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full bg-black/50 border border-white/10 rounded-2xl px-4 py-4 text-white font-bold outline-none focus:border-gold"
-          >
-            <option value="ALL">كل التواريخ</option>
-            {availableDates.map((d) => (
-              <option key={d} value={d}>
-                {formatDateAr(d)}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap gap-2 mb-8" data-testid="date-filters">
+          <FilterBtn current={selectedDate} value="ALL" onClick={setSelectedDate}>
+            كل التواريخ
+          </FilterBtn>
+          {availableDates.map((d) => (
+            <FilterBtn key={d} current={selectedDate} value={d} onClick={setSelectedDate}>
+              {formatDateAr(d)}
+            </FilterBtn>
+          ))}
         </div>
       )}
 

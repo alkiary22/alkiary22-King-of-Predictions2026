@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import api, { apiErrorMessage } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
-import { Trophy, Target, BarChart3, Hash, CheckCircle2 } from "lucide-react";
+import { Trophy, Target, BarChart3, Hash, CheckCircle2, Bell } from "lucide-react";
 import Flag from "../components/Flag";
 import AvatarUploader from "../components/AvatarUploader";
+import { enablePushNotifications } from "../lib/push";
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
@@ -12,6 +13,8 @@ export default function Profile() {
   const [teamsMap, setTeamsMap] = useState({});
   const [matchesMap, setMatchesMap] = useState({});
   const [loading, setLoading] = useState(true);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushMessage, setPushMessage] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -37,6 +40,19 @@ export default function Profile() {
       }
     })();
   }, []);
+
+  async function handleEnablePush() {
+    setPushLoading(true);
+    setPushMessage("");
+    try {
+      await enablePushNotifications();
+      setPushMessage("تم تفعيل إشعارات الجوال بنجاح ✅");
+    } catch (e) {
+      setPushMessage(e?.message || "تعذر تفعيل الإشعارات");
+    } finally {
+      setPushLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -68,6 +84,30 @@ export default function Profile() {
               </p>
             )}
           </div>
+        </div>
+
+        <div className="relative mt-6 rounded-xl border border-gold/20 bg-gold/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <p className="font-bold text-gold flex items-center gap-2">
+              <Bell className="w-4 h-4" />
+              إشعارات الجوال
+            </p>
+            <p className="text-xs text-zinc-400 mt-1">
+              فعّل التنبيهات لتصلك نتائج المباريات وتحديث النقاط مباشرة.
+            </p>
+            {pushMessage && (
+              <p className="text-xs mt-2 text-zinc-300">{pushMessage}</p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleEnablePush}
+            disabled={pushLoading}
+            className="px-4 py-2 rounded-lg bg-gold text-black font-black text-sm hover:opacity-90 disabled:opacity-60"
+          >
+            {pushLoading ? "جاري التفعيل..." : "تفعيل الإشعارات 🔔"}
+          </button>
         </div>
       </div>
 
