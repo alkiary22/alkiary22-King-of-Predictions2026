@@ -1,0 +1,22 @@
+{
+  "short_name": "ملك التوقعات",
+  "name": "ملك التوقعات",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/A.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/A.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
