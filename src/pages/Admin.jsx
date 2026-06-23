@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { Link } from "react-router-dom";
 import api, { apiErrorMessage } from "../lib/api";
 import Flag from "../components/Flag";
-import { Plus, Trash2, Edit2, CheckCircle2, ShieldCheck, Loader2, X, RefreshCw, Download, Users, Shield, UserMinus, FileText, Eye } from "lucide-react";
+import { Plus, Trash2, Edit2, CheckCircle2, ShieldCheck, Loader2, X, RefreshCw, Download, Users, Shield, UserMinus, FileText, Eye, Bell } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import ContentEditor from "../components/ContentEditor";
+import AdminBroadcastPush from "../components/AdminBroadcastPush";
 import { toast } from "sonner";
 
 function todayISO() {
@@ -155,6 +157,24 @@ export default function Admin() {
     }
   };
 
+
+  const handleResetPassword = async (u) => {
+    const newPassword = window.prompt(`أدخل كلمة المرور الجديدة للمستخدم "${u.name}"`);
+    if (!newPassword) return;
+
+    if (newPassword.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف أو أكثر");
+      return;
+    }
+
+    try {
+      await api.put(`/admin/users/${u.id}/password`, { new_password: newPassword });
+      toast.success(`تم تغيير كلمة مرور "${u.name}" بنجاح`);
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    }
+  };
+
   const handleToggleRole = async (u) => {
     const promote = u.role === "user";
     const msg = promote
@@ -180,6 +200,14 @@ export default function Admin() {
           </div>
           <h1 className="font-display text-4xl sm:text-5xl font-black mb-3">إدارة التطبيق</h1>
           <p className="text-zinc-400">أدِر المباريات، النتائج، والمستخدمين من مكان واحد.</p>
+          <div className="mt-4">
+            <Link
+              to="/admin/ads"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold text-black font-black hover:opacity-90"
+            >
+              إدارة السلايدر
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -197,6 +225,11 @@ export default function Admin() {
         <TabBtn active={tab === "predictions"} onClick={() => setTab("predictions")} testId="tab-predictions">
           <Eye className="w-4 h-4" /> التوقعات
         </TabBtn>
+                {isFullAdmin && (
+          <TabBtn active={tab === "push"} onClick={() => setTab("push")} testId="tab-push">
+            <Bell className="w-4 h-4" /> الإشعارات
+          </TabBtn>
+        )}
         {isFullAdmin && (
           <TabBtn active={tab === "content"} onClick={() => setTab("content")} testId="tab-content">
             <FileText className="w-4 h-4" /> النصوص
@@ -230,8 +263,11 @@ export default function Admin() {
           onEdit={(u) => setEditUser(u)}
           onDelete={handleDeleteUser}
           onToggleRole={handleToggleRole}
+          onResetPassword={handleResetPassword}
         />
       )}
+
+      {tab === "push" && isFullAdmin && <AdminBroadcastPush />}
 
       {tab === "content" && isFullAdmin && <ContentEditor />}
 
@@ -429,7 +465,7 @@ function MatchesTab({ loading, matches, teams, lastSync, onSync, syncing, onImpo
   );
 }
 
-function UsersTab({ users, currentUserId, isFullAdmin, onEdit, onDelete, onToggleRole }) {
+function UsersTab({ users, currentUserId, isFullAdmin, onEdit, onDelete, onToggleRole, onResetPassword }) {
   const [search, setSearch] = useState("");
   const filtered = users.filter(
     (u) =>
@@ -533,6 +569,15 @@ function UsersTab({ users, currentUserId, isFullAdmin, onEdit, onDelete, onToggl
                               )}
                             </button>
                           )}
+                          <button
+                            onClick={() => onResetPassword?.(u)}
+                            disabled={isSelf}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-amber-500/10 text-amber-400 text-xs font-bold hover:bg-amber-500/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={isSelf ? "لا يمكنك تغيير كلمة مرور حسابك من هنا" : "تغيير كلمة المرور"}
+                          >
+                            تغيير كلمة المرور
+                          </button>
+
                           <button
                             onClick={() => onDelete(u)}
                             disabled={isSelf}
