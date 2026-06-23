@@ -1,5 +1,5 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import { AuthProvider } from "@/context/AuthContext";
@@ -20,6 +20,10 @@ import Teams from "@/pages/Teams";
 import Leaderboard from "@/pages/Leaderboard";
 import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
+import AdminAds from "@/pages/AdminAds";
+
+import { useEffect } from "react";
+import { listenForegroundNotifications } from "@/lib/push";
 
 function Layout({ children }) {
   return (
@@ -27,9 +31,39 @@ function Layout({ children }) {
       <Header />
       <ClockWarning />
       {children}
-
     </>
   );
+}
+
+function PushNavigationBridge() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // 1) إشعار أثناء فتح التطبيق
+    listenForegroundNotifications((url) => {
+      if (url) navigate(url);
+    });
+
+    // 2) إشعار تم الضغط عليه من service worker
+    const handler = (event) => {
+      const data = event?.data;
+      if (data?.type === "OPEN_PUSH_URL" && data?.url) {
+        navigate(data.url);
+      }
+    };
+
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener("message", handler);
+    }
+
+    return () => {
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.removeEventListener("message", handler);
+      }
+    };
+  }, [navigate]);
+
+  return null;
 }
 
 function App() {
@@ -39,8 +73,10 @@ function App() {
         <ContentProvider>
           <TeamsProvider>
             <BrowserRouter>
+              <PushNavigationBridge />
               <AutoUpdate />
               <Toaster position="top-center" richColors theme="dark" dir="rtl" />
+
               <Routes>
                 <Route path="/" element={<Layout><Landing /></Layout>} />
                 <Route path="/login" element={<Login />} />
@@ -51,6 +87,7 @@ function App() {
                 <Route path="/leaderboard" element={<Layout><Leaderboard /></Layout>} />
                 <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute staffOnly><Layout><Admin /></Layout></ProtectedRoute>} />
+                <Route path="/admin/ads" element={<ProtectedRoute staffOnly><Layout><AdminAds /></Layout></ProtectedRoute>} />
               </Routes>
             </BrowserRouter>
           </TeamsProvider>
