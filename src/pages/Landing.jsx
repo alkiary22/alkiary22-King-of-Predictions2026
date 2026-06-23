@@ -4,6 +4,7 @@ import AdSlider from "../components/AdSlider";
 import { useAuth } from "../context/AuthContext";
 import { useContent } from "../context/ContentContext";
 import { Crown, Trophy, Target, ChevronLeft, Sparkles, TrendingUp, CalendarDays, Flame } from "lucide-react";
+import PushEnableBanner from "../components/PushEnableBanner";
 
 const HERO_BG =
   "https://static.prod-images.emergentagent.com/jobs/36ca7cb1-56bf-4cbb-a9df-d07fc64af674/images/cf694e18d81a1e3b6118c5df05310e8b849aa4f259b4293ec8caeb6d2c40b94f.png";
@@ -44,6 +45,7 @@ export default function Landing() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 w-full">
           <div className="max-w-4xl mx-auto text-center">
+            <PushEnableBanner />
             <AdSlider />
 
             {/* Crown badge */}

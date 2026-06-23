@@ -12,9 +12,29 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+function targetUrl(url) {
+  const path = url && String(url).startsWith("/") ? url : "/";
+  return self.location.origin + path;
+}
+
 messaging.onBackgroundMessage((payload) => {
-  self.registration.showNotification(payload.notification.title, {
-    body: payload.notification.body,
-    icon: "/A.png"
+  const title = payload?.notification?.title || "ملك التوقعات";
+  const body = payload?.notification?.body || "";
+  const url = payload?.data?.url || "/";
+
+  self.registration.showNotification(title, {
+    body,
+    icon: "/A.png",
+    data: { url }
   });
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const url = targetUrl(event.notification?.data?.url || "/");
+
+  event.waitUntil(
+    clients.openWindow(url)
+  );
 });
