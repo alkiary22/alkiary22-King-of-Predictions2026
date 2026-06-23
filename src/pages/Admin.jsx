@@ -43,20 +43,23 @@ export default function Admin() {
   const [tab, setTab] = useState("matches");
   const [users, setUsers] = useState([]);
   const [editUser, setEditUser] = useState(null);
+  const [passwordUser, setPasswordUser] = useState(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      const [t, m, ls, us] = await Promise.all([
+      const [t, m, ls] = await Promise.all([
         api.get("/teams"),
         api.get("/matches"),
         api.get("/admin/last-sync").catch(() => ({ data: null })),
-        api.get("/admin/users").catch(() => ({ data: [] })),
       ]);
       setTeams(t.data);
       setMatches(m.data);
       setLastSync(ls.data);
-      setUsers(us.data);
+
+      api.get("/admin/users")
+        .then((us) => setUsers(us.data || []))
+        .catch(() => setUsers([]));
     } catch (e) {
       toast.error(apiErrorMessage(e));
     } finally {
@@ -159,20 +162,7 @@ export default function Admin() {
 
 
   const handleResetPassword = async (u) => {
-    const newPassword = window.prompt(`أدخل كلمة المرور الجديدة للمستخدم "${u.name}"`);
-    if (!newPassword) return;
-
-    if (newPassword.length < 6) {
-      toast.error("كلمة المرور يجب أن تكون 6 أحرف أو أكثر");
-      return;
-    }
-
-    try {
-      await api.put(`/admin/users/${u.id}/password`, { new_password: newPassword });
-      toast.success(`تم تغيير كلمة مرور "${u.name}" بنجاح`);
-    } catch (e) {
-      toast.error(apiErrorMessage(e));
-    }
+    setPasswordUser(u);
   };
 
   const handleToggleRole = async (u) => {
@@ -191,7 +181,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" data-testid="admin-page">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-10" data-testid="admin-page">
       <div className="flex items-start justify-between flex-col md:flex-row gap-4 mb-8">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -203,7 +193,7 @@ export default function Admin() {
           <div className="mt-4">
             <Link
               to="/admin/ads"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold text-black font-black hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gold text-black font-black hover:opacity-90"
             >
               إدارة السلايدر
             </Link>
@@ -211,8 +201,37 @@ export default function Admin() {
         </div>
       </div>
 
+
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+        <AdminStatCard
+          label="المستخدمون"
+          value={users.length}
+          hint="إجمالي الحسابات"
+        />
+        <AdminStatCard
+          label="المباريات"
+          value={matches.length}
+          hint="كل المباريات"
+        />
+        <AdminStatCard
+          label="المنتهية"
+          value={matches.filter((m) => m.status === "finished").length}
+          hint="نتائج محفوظة"
+        />
+        <AdminStatCard
+          label="القادمة"
+          value={matches.filter((m) => m.status !== "finished").length}
+          hint="لم تنتهِ بعد"
+        />
+        <AdminStatCard
+          label="آخر مزامنة"
+          value={lastSync?.at ? timeAgoAr(lastSync.at) : "—"}
+          hint={lastSync?.ok ? "تعمل" : "غير مؤكدة"}
+        />
+      </div>
+
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-white/5" data-testid="admin-tabs">
+      <div className="flex gap-2 mb-6 border-b border-white/5 overflow-x-auto pb-2 scrollbar-hide" data-testid="admin-tabs">
         <TabBtn active={tab === "matches"} onClick={() => setTab("matches")} testId="tab-matches">
           <CheckCircle2 className="w-4 h-4" /> المباريات
         </TabBtn>
@@ -284,6 +303,28 @@ export default function Admin() {
       {editUser && (
         <EditUserModal user={editUser} onClose={() => setEditUser(null)} onSaved={reload} />
       )}
+
+      {passwordUser && (
+        <PasswordResetModal
+          user={passwordUser}
+          onClose={() => setPasswordUser(null)}
+          onSaved={() => {
+            setPasswordUser(null);
+            reload();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+
+function AdminStatCard({ label, value, hint }) {
+  return (
+    <div className="glass-card rounded-2xl p-4 border border-white/10">
+      <div className="text-xs text-zinc-500 mb-2">{label}</div>
+      <div className="font-display text-2xl font-black text-gold truncate">{value}</div>
+      <div className="text-[11px] text-zinc-500 mt-1 truncate">{hint}</div>
     </div>
   );
 }
@@ -304,6 +345,34 @@ function TabBtn({ active, onClick, children, testId }) {
 }
 
 function MatchesTab({ loading, matches, teams, lastSync, onSync, syncing, onImportNew, onSeed, onAdd, onResult, onEditTime, onDelete, isFullAdmin }) {
+  const [matchFilter, setMatchFilter] = useState("all");
+  const [matchSearch, setMatchSearch] = useState("");
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const filteredMatches = matches.filter((m) => {
+    const home = teams.find((t) => t.code === m.home_team);
+    const away = teams.find((t) => t.code === m.away_team);
+
+    const q = matchSearch.trim().toLowerCase();
+    const searchOk =
+      !q ||
+      home?.name_ar?.toLowerCase().includes(q) ||
+      away?.name_ar?.toLowerCase().includes(q) ||
+      home?.name_en?.toLowerCase().includes(q) ||
+      away?.name_en?.toLowerCase().includes(q) ||
+      m.home_team?.toLowerCase().includes(q) ||
+      m.away_team?.toLowerCase().includes(q);
+
+    const filterOk =
+      matchFilter === "all" ||
+      (matchFilter === "upcoming" && m.status !== "finished") ||
+      (matchFilter === "finished" && m.status === "finished") ||
+      (matchFilter === "today" && m.match_date === today);
+
+    return searchOk && filterOk;
+  });
+
   return (
     <>
       <div className="flex items-start justify-between flex-col md:flex-row gap-4 mb-6">
@@ -369,97 +438,222 @@ function MatchesTab({ loading, matches, teams, lastSync, onSync, syncing, onImpo
         <span className="text-xs text-zinc-500">تعمل تلقائياً كل 15 دقيقة</span>
       </div>
 
+
+      <div className="glass-card rounded-2xl p-4 mb-6">
+        <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+          <input
+            type="text"
+            value={matchSearch}
+            onChange={(e) => setMatchSearch(e.target.value)}
+            placeholder="ابحث باسم الفريق..."
+            className="w-full lg:w-80 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-gold"
+          />
+
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {[
+              ["all", "الكل"],
+              ["upcoming", "القادمة"],
+              ["finished", "المنتهية"],
+              ["today", "اليوم"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setMatchFilter(key)}
+                className={`shrink-0 px-4 py-2 rounded-xl text-sm font-bold ${
+                  matchFilter === key
+                    ? "bg-gold text-black"
+                    : "bg-white/5 text-zinc-300 hover:bg-white/10"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="text-xs text-zinc-500 mt-3">
+          عرض {filteredMatches.length} من {matches.length} مباراة
+        </div>
+      </div>
+
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="skeleton h-20 rounded-xl" />
           ))}
         </div>
-      ) : matches.length === 0 ? (
+      ) : filteredMatches.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center text-zinc-400">
-          لم تُضف أي مباراة بعد.
+          لا توجد مباريات مطابقة للفلتر.
         </div>
       ) : (
-        <div className="glass-card rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-white/5">
-              <tr className="text-right">
-                <th className="p-4 font-bold">المباراة</th>
-                <th className="p-4 font-bold">التاريخ</th>
-                <th className="p-4 font-bold">المرحلة</th>
-                <th className="p-4 font-bold">النتيجة</th>
-                <th className="p-4 font-bold">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {matches.map((m) => {
-                const home = teams.find((t) => t.code === m.home_team);
-                const away = teams.find((t) => t.code === m.away_team);
-                return (
-                  <tr key={m.id} className="border-t border-white/5" data-testid={`admin-match-row-${m.id}`}>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <Flag code={home?.code} size="w-7 h-5" />
-                        <span className="font-bold">{home?.name_ar}</span>
-                        <span className="text-zinc-500 mx-1">ضد</span>
-                        <span className="font-bold">{away?.name_ar}</span>
-                        <Flag code={away?.code} size="w-7 h-5" />
-                      </div>
-                    </td>
-                    <td className="p-4 text-zinc-300">{m.match_date}</td>
-                    <td className="p-4 text-zinc-300">{m.stage}{m.group_name ? ` · ${m.group_name}` : ""}</td>
-                    <td className="p-4">
-                      {m.status === "finished" ? (
-                        <div>
-                          <span className="font-display font-bold text-gold">{m.home_score} - {m.away_score}</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                              m.result_source === "auto"
-                                ? "bg-green-500/15 text-green-400"
-                                : "bg-blue-500/15 text-blue-400"
-                            }`}>
-                              {m.result_source === "auto" ? "تلقائي" : "يدوي"}
-                            </span>
-                            <span className="text-[10px] text-zinc-500">{timeAgoAr(m.result_updated_at)}</span>
-                          </div>
+        <>
+          {/* Mobile cards */}
+          <div className="grid gap-3 md:hidden">
+            {filteredMatches.map((m) => {
+              const home = teams.find((t) => t.code === m.home_team);
+              const away = teams.find((t) => t.code === m.away_team);
+
+              return (
+                <div key={m.id} className="glass-card rounded-2xl p-4 border border-white/10" data-testid={`admin-match-card-${m.id}`}>
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Flag code={home?.code} size="w-7 h-5" />
+                      <span className="font-bold truncate">{home?.name_ar}</span>
+                    </div>
+                    <span className="text-zinc-500 text-xs">ضد</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-bold truncate">{away?.name_ar}</span>
+                      <Flag code={away?.code} size="w-7 h-5" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs mb-3">
+                    <div className="bg-white/5 rounded-xl p-3">
+                      <div className="text-zinc-500 mb-1">التاريخ</div>
+                      <div className="font-bold">{m.match_date}</div>
+                    </div>
+                    <div className="bg-white/5 rounded-xl p-3">
+                      <div className="text-zinc-500 mb-1">المرحلة</div>
+                      <div className="font-bold">{m.stage}{m.group_name ? ` · ${m.group_name}` : ""}</div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/5 rounded-xl p-3 mb-3">
+                    <div className="text-zinc-500 text-xs mb-1">النتيجة</div>
+                    {m.status === "finished" ? (
+                      <div>
+                        <div className="font-display font-black text-lg text-gold">{m.home_score} - {m.away_score}</div>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                            m.result_source === "auto"
+                              ? "bg-green-500/15 text-green-400"
+                              : "bg-blue-500/15 text-blue-400"
+                          }`}>
+                            {m.result_source === "auto" ? "تلقائي" : "يدوي"}
+                          </span>
+                          <span className="text-[10px] text-zinc-500">{timeAgoAr(m.result_updated_at)}</span>
                         </div>
-                      ) : (
-                        <span className="text-zinc-500 text-xs">لم تنتهِ</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => onResult(m)}
-                          data-testid={`set-result-${m.id}`}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-gold/15 text-gold text-xs font-bold hover:bg-gold/25"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          {m.status === "finished" ? "تعديل النتيجة" : "إدخال النتيجة"}
-                        </button>
-                        <button
-                          onClick={() => onEditTime(m)}
-                          data-testid={`edit-time-${m.id}`}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-blue-500/10 text-blue-400 text-xs font-bold hover:bg-blue-500/20"
-                        >
-                          تعديل الوقت
-                        </button>
-                        <button
-                          onClick={() => onDelete(m.id)}
-                          data-testid={`delete-match-${m.id}`}
-                          className="p-1.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                          title="حذف"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    ) : (
+                      <span className="text-zinc-400 text-sm">لم تنتهِ بعد</span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      onClick={() => onResult(m)}
+                      data-testid={`set-result-mobile-${m.id}`}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gold/15 text-gold text-sm font-bold hover:bg-gold/25"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      {m.status === "finished" ? "تعديل النتيجة" : "إدخال النتيجة"}
+                    </button>
+
+                    <button
+                      onClick={() => onEditTime(m)}
+                      data-testid={`edit-time-mobile-${m.id}`}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-500/10 text-blue-400 text-sm font-bold hover:bg-blue-500/20"
+                    >
+                      تعديل الوقت
+                    </button>
+
+                    <button
+                      onClick={() => onDelete(m.id)}
+                      data-testid={`delete-match-mobile-${m.id}`}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 text-sm font-bold hover:bg-red-500/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      حذف المباراة
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop table */}
+          <div className="glass-card rounded-2xl overflow-hidden hidden md:block">
+            <div className="w-full overflow-x-auto"><table className="w-full min-w-[760px] text-sm">
+              <thead className="bg-white/5">
+                <tr className="text-right">
+                  <th className="p-4 font-bold">المباراة</th>
+                  <th className="p-4 font-bold">التاريخ</th>
+                  <th className="p-4 font-bold">المرحلة</th>
+                  <th className="p-4 font-bold">النتيجة</th>
+                  <th className="p-4 font-bold">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMatches.map((m) => {
+                  const home = teams.find((t) => t.code === m.home_team);
+                  const away = teams.find((t) => t.code === m.away_team);
+                  return (
+                    <tr key={m.id} className="border-t border-white/5" data-testid={`admin-match-row-${m.id}`}>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Flag code={home?.code} size="w-7 h-5" />
+                          <span className="font-bold">{home?.name_ar}</span>
+                          <span className="text-zinc-500 mx-1">ضد</span>
+                          <span className="font-bold">{away?.name_ar}</span>
+                          <Flag code={away?.code} size="w-7 h-5" />
+                        </div>
+                      </td>
+                      <td className="p-4 text-zinc-300">{m.match_date}</td>
+                      <td className="p-4 text-zinc-300">{m.stage}{m.group_name ? ` · ${m.group_name}` : ""}</td>
+                      <td className="p-4">
+                        {m.status === "finished" ? (
+                          <div>
+                            <span className="font-display font-bold text-gold">{m.home_score} - {m.away_score}</span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                m.result_source === "auto"
+                                  ? "bg-green-500/15 text-green-400"
+                                  : "bg-blue-500/15 text-blue-400"
+                              }`}>
+                                {m.result_source === "auto" ? "تلقائي" : "يدوي"}
+                              </span>
+                              <span className="text-[10px] text-zinc-500">{timeAgoAr(m.result_updated_at)}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-zinc-500 text-xs">لم تنتهِ</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => onResult(m)}
+                            data-testid={`set-result-${m.id}`}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-gold/15 text-gold text-xs font-bold hover:bg-gold/25"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            {m.status === "finished" ? "تعديل النتيجة" : "إدخال النتيجة"}
+                          </button>
+                          <button
+                            onClick={() => onEditTime(m)}
+                            data-testid={`edit-time-${m.id}`}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-blue-500/10 text-blue-400 text-xs font-bold hover:bg-blue-500/20"
+                          >
+                            تعديل الوقت
+                          </button>
+                          <button
+                            onClick={() => onDelete(m.id)}
+                            data-testid={`delete-match-${m.id}`}
+                            className="p-1.5 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                            title="حذف"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table></div>
+          </div>
+        </>
       )}
     </>
   );
@@ -467,12 +661,23 @@ function MatchesTab({ loading, matches, teams, lastSync, onSync, syncing, onImpo
 
 function UsersTab({ users, currentUserId, isFullAdmin, onEdit, onDelete, onToggleRole, onResetPassword }) {
   const [search, setSearch] = useState("");
-  const filtered = users.filter(
-    (u) =>
-      !search ||
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const [roleFilter, setRoleFilter] = useState("all");
+
+  const filtered = users.filter((u) => {
+    const q = search.trim().toLowerCase();
+    const searchOk =
+      !q ||
+      u.name?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q);
+
+    const roleOk =
+      roleFilter === "all" ||
+      (roleFilter === "admin" && u.role === "admin") ||
+      (roleFilter === "supervisor" && u.role === "supervisor") ||
+      (roleFilter === "user" && (u.role === "user" || !u.role));
+
+    return searchOk && roleOk;
+  });
 
   return (
     <div data-testid="users-tab">
@@ -486,14 +691,41 @@ function UsersTab({ users, currentUserId, isFullAdmin, onEdit, onDelete, onToggl
             </p>
           )}
         </div>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="ابحث بالاسم أو البريد..."
-          data-testid="users-search"
-          className="w-full md:w-72 bg-surface border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-gold outline-none text-sm"
-        />
+        <div className="w-full md:w-auto flex flex-col gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="ابحث بالاسم أو البريد..."
+            data-testid="users-search"
+            className="w-full md:w-72 bg-surface border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-gold outline-none text-sm"
+          />
+
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {[
+              ["all", "الكل"],
+              ["admin", "مدير"],
+              ["supervisor", "مشرف"],
+              ["user", "لاعب"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setRoleFilter(key)}
+                className={`shrink-0 px-3 py-2 rounded-xl text-xs font-bold ${
+                  roleFilter === key
+                    ? "bg-gold text-black"
+                    : "bg-white/5 text-zinc-300 hover:bg-white/10"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="text-xs text-zinc-500">
+            عرض {filtered.length} من {users.length} مستخدم
+          </div>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -501,8 +733,101 @@ function UsersTab({ users, currentUserId, isFullAdmin, onEdit, onDelete, onToggl
           {users.length === 0 ? "لا يوجد مستخدمون مسجلون بعد" : "لا توجد نتائج مطابقة"}
         </div>
       ) : (
-        <div className="glass-card rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
+        <>
+          {/* Mobile user cards */}
+          <div className="grid gap-3 md:hidden">
+            {filtered.map((u) => {
+              const isSelf = u.id === currentUserId;
+              return (
+                <div key={u.id} className="glass-card rounded-2xl p-4 border border-white/10" data-testid={`admin-user-card-${u.id}`}>
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-gold/15 text-gold flex items-center justify-center text-sm font-black shrink-0">
+                        {u.name?.[0]}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-black truncate">
+                          {u.name}
+                          {isSelf && <span className="text-[10px] text-gold mr-2">(أنت)</span>}
+                        </div>
+                        <div className="text-xs text-zinc-400 font-mono truncate">{u.email}</div>
+                      </div>
+                    </div>
+                    <RoleBadge role={u.role} />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-white/5 rounded-xl p-3">
+                      <div className="text-zinc-500 text-xs mb-1">النقاط</div>
+                      <div className="font-display font-black text-gold">{u.total_points || 0}</div>
+                    </div>
+                    <div className="bg-white/5 rounded-xl p-3">
+                      <div className="text-zinc-500 text-xs mb-1">التوقعات</div>
+                      <div className="font-display font-black text-white">{u.predictions_count ?? 0}</div>
+                    </div>
+                  </div>
+
+                  {isFullAdmin && (
+                    <div className="grid grid-cols-1 gap-2">
+                      <button
+                        onClick={() => onEdit(u)}
+                        data-testid={`edit-user-mobile-${u.id}`}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-500/10 text-blue-400 text-sm font-bold hover:bg-blue-500/20"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        تعديل الاسم
+                      </button>
+
+                      {u.role !== "admin" && (
+                        <button
+                          onClick={() => onToggleRole(u)}
+                          disabled={isSelf}
+                          data-testid={`toggle-role-mobile-${u.id}`}
+                          className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed ${
+                            u.role === "supervisor"
+                              ? "bg-orange-500/10 text-orange-400 hover:bg-orange-500/20"
+                              : "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
+                          }`}
+                        >
+                          {u.role === "supervisor" ? (
+                            <>
+                              <UserMinus className="w-4 h-4" /> إنزال لـ لاعب
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="w-4 h-4" /> ترقية لـ مشرف
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => onResetPassword?.(u)}
+                        disabled={isSelf}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500/10 text-amber-400 text-sm font-bold hover:bg-amber-500/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        تغيير كلمة المرور
+                      </button>
+
+                      <button
+                        onClick={() => onDelete(u)}
+                        disabled={isSelf}
+                        data-testid={`delete-user-mobile-${u.id}`}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 text-sm font-bold hover:bg-red-500/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        حذف المستخدم
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop users table */}
+          <div className="glass-card rounded-2xl overflow-hidden hidden md:block">
+            <div className="w-full overflow-x-auto"><table className="w-full min-w-[760px] text-sm">
             <thead className="bg-white/5">
               <tr className="text-right">
                 <th className="p-4 font-bold">المستخدم</th>
@@ -594,8 +919,9 @@ function UsersTab({ users, currentUserId, isFullAdmin, onEdit, onDelete, onToggl
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         </div>
+        </>
       )}
     </div>
   );
@@ -622,6 +948,161 @@ function RoleBadge({ role }) {
     </span>
   );
 }
+
+
+function PasswordResetModal({ user, onClose, onSaved }) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [donePassword, setDonePassword] = useState("");
+
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    let pass = "";
+    for (let i = 0; i < 10; i++) {
+      pass += chars[Math.floor(Math.random() * chars.length)];
+    }
+    setPassword(pass);
+    setConfirm(pass);
+  };
+
+  const copyPassword = async () => {
+    const text = donePassword || password;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("تم نسخ كلمة المرور");
+    } catch {
+      toast.error("تعذر النسخ");
+    }
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+
+    if (password.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف أو أكثر");
+      return;
+    }
+
+    if (password !== confirm) {
+      toast.error("كلمة المرور وتأكيدها غير متطابقين");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await api.put(`/admin/users/${user.id}/password`, { new_password: password });
+      setDonePassword(password);
+      toast.success(`تم تغيير كلمة مرور "${user.name}" بنجاح`);
+      onSaved?.();
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="glass-card rounded-2xl w-full max-w-md p-5 sm:p-6 border border-white/10">
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div>
+            <h3 className="font-display text-2xl font-black">تغيير كلمة المرور</h3>
+            <p className="text-sm text-zinc-400 mt-1">
+              المستخدم: <span className="text-gold font-bold">{user.name}</span>
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">{user.email}</p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300"
+          >
+            ×
+          </button>
+        </div>
+
+        {donePassword ? (
+          <div className="space-y-4">
+            <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4">
+              <div className="font-bold text-emerald-300 mb-2">تم التغيير بنجاح</div>
+              <div className="text-xs text-zinc-400 mb-2">كلمة المرور الجديدة:</div>
+              <div className="font-mono text-lg bg-black/30 rounded-lg px-3 py-2 text-gold break-all">
+                {donePassword}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                onClick={copyPassword}
+                className="px-4 py-3 rounded-xl bg-gold text-black font-black"
+              >
+                نسخ كلمة المرور
+              </button>
+              <button
+                onClick={onClose}
+                className="px-4 py-3 rounded-xl bg-white/10 text-white font-bold"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold mb-2">كلمة المرور الجديدة</label>
+              <input
+                type="text"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white outline-none focus:border-gold"
+                placeholder="اكتب كلمة المرور الجديدة"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-2">تأكيد كلمة المرور</label>
+              <input
+                type="text"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white outline-none focus:border-gold"
+                placeholder="أعد كتابة كلمة المرور"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={generatePassword}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white font-bold hover:bg-white/15"
+            >
+              توليد كلمة مرور تلقائيًا
+            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-4 py-3 rounded-xl bg-gold text-black font-black disabled:opacity-60"
+              >
+                {saving ? "جاري الحفظ..." : "حفظ كلمة المرور"}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-3 rounded-xl bg-white/10 text-white font-bold"
+              >
+                إلغاء
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 function EditUserModal({ user, onClose, onSaved }) {
   const [name, setName] = useState(user.name);
@@ -986,7 +1467,7 @@ function PredictionsTab({ matches, teams }) {
           <button
             onClick={load}
             data-testid="predictions-refresh"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-sm font-bold"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-sm font-bold"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> تحديث
           </button>
