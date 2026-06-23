@@ -15,15 +15,17 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [pushLoading, setPushLoading] = useState(false);
   const [pushMessage, setPushMessage] = useState("");
+  const [pushEnabled, setPushEnabled] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const [s, p, t, m] = await Promise.all([
+        const [s, p, t, m, pushInfo] = await Promise.all([
           api.get("/stats/me"),
           api.get("/predictions/me"),
           api.get("/teams"),
           api.get("/matches"),
+          api.get("/push/me").catch(() => ({ data: { count: 0 } })),
         ]);
         setStats(s.data);
         setPredictions(p.data);
@@ -33,6 +35,14 @@ export default function Profile() {
         const mm = {};
         m.data.forEach((x) => (mm[x.id] = x));
         setMatchesMap(mm);
+
+        if ((pushInfo.data?.count || 0) > 0) {
+          setPushEnabled(true);
+          setPushMessage("تم تفعيل إشعارات الجوال بنجاح ✅");
+          localStorage.setItem("push_enabled", "1");
+        } else {
+          setPushEnabled(false);
+        }
       } catch (e) {
         console.error(apiErrorMessage(e));
       } finally {
@@ -46,6 +56,8 @@ export default function Profile() {
     setPushMessage("");
     try {
       await enablePushNotifications();
+      localStorage.setItem("push_enabled", "1");
+      setPushEnabled(true);
       setPushMessage("تم تفعيل إشعارات الجوال بنجاح ✅");
     } catch (e) {
       setPushMessage(e?.message || "تعذر تفعيل الإشعارات");
@@ -95,18 +107,22 @@ export default function Profile() {
             <p className="text-xs text-zinc-400 mt-1">
               فعّل التنبيهات لتصلك نتائج المباريات وتحديث النقاط مباشرة.
             </p>
-            {pushMessage && (
+            {pushEnabled ? (
+              <p className="text-xs mt-2 text-green-400 font-bold">
+                تم تفعيل إشعارات الجوال بنجاح ✅
+              </p>
+            ) : pushMessage ? (
               <p className="text-xs mt-2 text-zinc-300">{pushMessage}</p>
-            )}
+            ) : null}
           </div>
 
           <button
             type="button"
             onClick={handleEnablePush}
-            disabled={pushLoading}
+            disabled={pushLoading || pushEnabled}
             className="px-4 py-2 rounded-lg bg-gold text-black font-black text-sm hover:opacity-90 disabled:opacity-60"
           >
-            {pushLoading ? "جاري التفعيل..." : "تفعيل الإشعارات 🔔"}
+            {pushLoading ? "جاري التفعيل..." : pushEnabled ? "الإشعارات مفعلة ✅" : "تفعيل الإشعارات 🔔"}
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Bell, X, CheckCheck, Trophy, Frown } from "lucide-react";
+import { Bell, X, CheckCheck, Trophy, Frown, Clock } from "lucide-react";
 import api from "../lib/api";
 import Flag from "./Flag";
 
@@ -129,6 +129,46 @@ function NotificationItem({ item, teamsMap = {} }) {
   const p = item.payload || {};
   const home = teamsMap[p.home_team];
   const away = teamsMap[p.away_team];
+
+  if (item.type === "match_start_reminder") {
+    return (
+      <div
+        data-testid={`notification-item-${item.id}`}
+        className={`p-4 border-b border-white/5 last:border-0 ${
+          !item.read ? "bg-gold/5" : ""
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <div className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center bg-gold/15 text-gold">
+            <Clock className="w-4 h-4" />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black mb-1">
+              اقتربت المباراة ⏰
+            </p>
+
+            <div className="flex items-center gap-2 text-xs text-zinc-400 mb-1">
+              {home && <Flag code={home.code} size="w-5 h-3.5" />}
+              <span>{home?.name_ar || p.home_team}</span>
+              <span className="text-gold font-black">ضد</span>
+              <span>{away?.name_ar || p.away_team}</span>
+              {away && <Flag code={away.code} size="w-5 h-3.5" />}
+            </div>
+
+            <p className="text-xs text-zinc-500">
+              تبقّى {p.minutes_before || 15} دقيقة على بداية المباراة، لا تنسَ توقعك.
+              <span className="mx-2">•</span>
+              {timeAgo(item.created_at)}
+            </p>
+          </div>
+
+          {!item.read && <span className="w-2 h-2 rounded-full bg-gold shrink-0 mt-2" />}
+        </div>
+      </div>
+    );
+  }
+
   const points = typeof p.points === "number" ? p.points : 0;
   const isWin = points > 0;
 
