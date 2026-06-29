@@ -1,5 +1,5 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import { AuthProvider } from "@/context/AuthContext";
@@ -24,6 +24,7 @@ import Admin from "@/pages/Admin";
 import AdminAds from "@/pages/AdminAds";
 
 import { useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 import { listenForegroundNotifications } from "@/lib/push";
 
 function Layout({ children }) {
@@ -68,12 +69,14 @@ function PushNavigationBridge() {
 }
 
 function App() {
+  const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter;
+
   return (
     <div className="App min-h-screen bg-base text-white">
       <AuthProvider>
         <ContentProvider>
           <TeamsProvider>
-            <BrowserRouter>
+            <Router>
               <PushNavigationBridge />
               <AutoUpdate />
               <Toaster position="top-center" richColors theme="dark" dir="rtl" />
@@ -128,7 +131,7 @@ function App() {
                   }
                 />
               </Routes>
-            </BrowserRouter>
+            </Router>
           </TeamsProvider>
         </ContentProvider>
       </AuthProvider>
