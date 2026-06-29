@@ -2,19 +2,27 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "@/index.css";
 import App from "@/App";
+import eruda from "eruda";
+import ErrorBoundary from "./ErrorBoundary";
+
+if (window.location.protocol !== "http:" && window.location.protocol !== "https:") {
+  eruda.init();
+}
 
 window.onerror = function(message, source, line, col, error) {
-  document.body.innerHTML =
-    "<div style='padding:20px;background:#111;color:#fff;font-size:16px;direction:rtl'>" +
-    "<h2>حدث خطأ داخل التطبيق</h2>" +
-    "<pre>" + message + "</pre>" +
-    "</div>";
+  console.error(message, source, line, col, error);
+};
+
+window.onunhandledrejection = function(e) {
+  console.error("Unhandled Promise:", e.reason);
 };
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>
 );
