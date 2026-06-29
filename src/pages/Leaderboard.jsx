@@ -2,16 +2,26 @@ import { useEffect, useState } from "react";
 import api, { apiErrorMessage } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useContent } from "../context/ContentContext";
-import { Trophy, Crown, Medal, Star } from "lucide-react";
+import { Trophy, Crown, Medal, Star, X } from "lucide-react";
 import Avatar from "../components/Avatar";
+import KingCelebration from "../components/KingCelebration";
 
 export default function Leaderboard() {
   const { user } = useAuth();
   const { t } = useContent();
+  const [marquee,setMarquee]=useState("🏆 الرعاة الرسميون لجائزة ملك التوقعات");
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(100);
 
-  useEffect(() => {
+  
+useEffect(() => {
+  api.get("/marquee")
+    .then(r=>setMarquee(r.data?.text || ""))
+    .catch(()=>{});
+}, []);
+
+useEffect(() => {
     (async () => {
       try {
         const { data } = await api.get("/leaderboard");
@@ -24,15 +34,21 @@ export default function Leaderboard() {
     })();
   }, []);
 
+
+
   const podium = rows.slice(0, 3);
   const rest = rows.slice(3);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-28" data-testid="leaderboard-page">
+
+      <KingCelebration leader={rows[0]} />
+
+
       <div className="sticky top-16 z-40 mb-6 border border-gold/20 bg-black/95 backdrop-blur rounded-2xl overflow-hidden shadow-[0_0_25px_rgba(255,215,0,0.15)]">
         <div className="relative h-12 flex items-center overflow-hidden">
           <div className="whitespace-nowrap text-gold font-black text-sm sm:text-base" style={{ animation: "leaderboardMarquee 18s linear infinite" }}>
-            🏆 الرعاة الرسميون لجائزة ملك التوقعات | ⭐ قيس العدار | ⭐ الياس الخياري | 🏆
+            {marquee}
           </div>
         </div>
         <style>
@@ -86,7 +102,7 @@ export default function Leaderboard() {
                     data-testid={`podium-${r.rank}`}
                     className={`relative rounded-3xl text-center border overflow-visible ${
                       isFirst
-                        ? "bg-gradient-to-b from-gold/18 to-white/[0.03] border-gold/50 p-4 sm:p-5 sm:scale-105 sm:-translate-y-3 shadow-[0_0_40px_rgba(255,215,0,0.18)]"
+                        ? "bg-gradient-to-b from-gold/22 to-white/[0.03] border-gold/60 p-4 sm:p-5 sm:scale-105 sm:-translate-y-3 shadow-[0_0_45px_rgba(255,215,0,0.28)] animate-[kingGlow_2.4s_ease-in-out_infinite]"
                         : isSecond
                         ? "bg-gradient-to-b from-zinc-200/10 to-white/[0.03] border-zinc-300/35 p-4 sm:p-5"
                         : "bg-gradient-to-b from-amber-700/15 to-white/[0.03] border-amber-700/40 p-4 sm:p-5"
@@ -193,6 +209,10 @@ export default function Leaderboard() {
           )}
         </>
       )}
+
+      {/* النافذة المنبثقة التكريمية لملك التوقعات الحالي */}
+      
+
     </div>
   );
 }

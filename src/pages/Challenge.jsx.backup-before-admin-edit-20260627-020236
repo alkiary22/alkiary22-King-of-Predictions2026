@@ -1,0 +1,555 @@
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+
+const placeholderTeam = (label) => ({
+  name: label,
+  flag: "🏆",
+  placeholder: true,
+});
+
+const round32Matches = [
+  {
+    id: "r32_1",
+    date: "الإثنين، 29 يونيو",
+    time: "23:30 مكة",
+    home: { name: "كوت ديفوار", flag: "🇨🇮" },
+    away: { name: "التشيك", flag: "🇨🇿" },
+  },
+  {
+    id: "r32_2",
+    date: "الأربعاء، 1 يوليو",
+    time: "00:00 مكة",
+    home: { name: "فرنسا", flag: "🇫🇷" },
+    away: { name: "الرأس الأخضر", flag: "🇨🇻" },
+  },
+  {
+    id: "r32_3",
+    date: "الأحد، 28 يونيو",
+    time: "22:00 مكة",
+    home: { name: "كوريا الجنوبية", flag: "🇰🇷" },
+    away: { name: "البوسنة والهرسك", flag: "🇧🇦" },
+  },
+  {
+    id: "r32_4",
+    date: "الثلاثاء، 30 يونيو",
+    time: "04:00 مكة",
+    home: { name: "هولندا", flag: "🇳🇱" },
+    away: { name: "البرازيل", flag: "🇧🇷" },
+  },
+  {
+    id: "r32_5",
+    date: "الجمعة، 3 يوليو",
+    time: "02:00 مكة",
+    home: { name: "أوزبكستان", flag: "🇺🇿" },
+    away: { name: "كرواتيا", flag: "🇭🇷" },
+  },
+  {
+    id: "r32_6",
+    date: "الخميس، 2 يوليو",
+    time: "22:00 مكة",
+    home: { name: "إسبانيا", flag: "🇪🇸" },
+    away: { name: "النمسا", flag: "🇦🇹" },
+  },
+  {
+    id: "r32_7",
+    date: "الخميس، 2 يوليو",
+    time: "03:00 مكة",
+    home: { name: "أستراليا", flag: "🇦🇺" },
+    away: { name: "كندا", flag: "🇨🇦" },
+  },
+  {
+    id: "r32_8",
+    date: "الأربعاء، 1 يوليو",
+    time: "23:00 مكة",
+    home: { name: "المغرب", flag: "🇲🇦" },
+    away: { name: "أمريكا", flag: "🇺🇸" },
+  },
+  {
+    id: "r32_9",
+    date: "السبت، 4 يوليو",
+    time: "21:00 مكة",
+    home: { name: "الأرجنتين", flag: "🇦🇷" },
+    away: { name: "اليابان", flag: "🇯🇵" },
+  },
+  {
+    id: "r32_10",
+    date: "الأحد، 5 يوليو",
+    time: "00:00 مكة",
+    home: { name: "إنجلترا", flag: "🏴" },
+    away: { name: "السنغال", flag: "🇸🇳" },
+  },
+  {
+    id: "r32_11",
+    date: "الإثنين، 6 يوليو",
+    time: "22:00 مكة",
+    home: { name: "ألمانيا", flag: "🇩🇪" },
+    away: { name: "غانا", flag: "🇬🇭" },
+  },
+  {
+    id: "r32_12",
+    date: "الثلاثاء، 7 يوليو",
+    time: "03:00 مكة",
+    home: { name: "إيطاليا", flag: "🇮🇹" },
+    away: { name: "مصر", flag: "🇪🇬" },
+  },
+  {
+    id: "r32_13",
+    date: "الأربعاء، 8 يوليو",
+    time: "22:00 مكة",
+    home: { name: "البرتغال", flag: "🇵🇹" },
+    away: { name: "المكسيك", flag: "🇲🇽" },
+  },
+  {
+    id: "r32_14",
+    date: "الخميس، 9 يوليو",
+    time: "23:00 مكة",
+    home: { name: "أوروجواي", flag: "🇺🇾" },
+    away: { name: "السعودية", flag: "🇸🇦" },
+  },
+  {
+    id: "r32_15",
+    date: "الجمعة، 10 يوليو",
+    time: "22:00 مكة",
+    home: { name: "بلجيكا", flag: "🇧🇪" },
+    away: { name: "كولومبيا", flag: "🇨🇴" },
+  },
+  {
+    id: "r32_16",
+    date: "السبت، 11 يوليو",
+    time: "00:00 مكة",
+    home: { name: "سويسرا", flag: "🇨🇭" },
+    away: { name: "الدنمارك", flag: "🇩🇰" },
+  },
+];
+
+function buildNextRound(previousWinners, prefix, label, dates) {
+  const matches = [];
+
+  for (let i = 0; i < previousWinners.length; i += 2) {
+    matches.push({
+      id: `${prefix}_${i / 2 + 1}`,
+      date: dates?.[i / 2]?.date || label,
+      time: dates?.[i / 2]?.time || "",
+      home: previousWinners[i] || placeholderTeam(label),
+      away: previousWinners[i + 1] || placeholderTeam(label),
+    });
+  }
+
+  return matches;
+}
+
+function TeamRow({ team, active, disabled, onClick }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`group flex w-full items-center justify-between gap-3 border-t border-white/10 px-3 py-3 text-right transition ${
+        active
+          ? "bg-yellow-400 text-black"
+          : disabled
+          ? "bg-[#285775]/55 text-white/35"
+          : "bg-[#1f5575]/90 text-white hover:bg-[#2b6c91]"
+      }`}
+    >
+      <span
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
+          active
+            ? "bg-black text-yellow-300"
+            : disabled
+            ? "bg-white/10 text-white/20"
+            : "bg-white/15 text-white/60 group-hover:bg-white/25"
+        }`}
+      >
+        ✓
+      </span>
+
+      <span className="min-w-0 flex-1 truncate text-sm font-black">
+        {team.name}
+      </span>
+
+      <span className="text-3xl leading-none">{team.flag}</span>
+    </button>
+  );
+}
+
+function BracketMatch({ match, selected, onSelect, muted }) {
+  const homeDisabled = match.home?.placeholder;
+  const awayDisabled = match.away?.placeholder;
+
+  return (
+    <div
+      className={`relative w-72 shrink-0 overflow-hidden rounded-xl border shadow-2xl ${
+        muted
+          ? "border-white/10 opacity-55"
+          : "border-cyan-300/20 shadow-black/30"
+      }`}
+    >
+      <div className="bg-[#073d5f]/95 px-4 py-3 text-right">
+        <div className="text-sm font-black text-white">{match.date}</div>
+        {match.time && (
+          <div className="mt-0.5 text-xs font-semibold text-white/75">
+            {match.time}
+          </div>
+        )}
+      </div>
+
+      <TeamRow
+        team={match.home}
+        active={selected?.name === match.home?.name}
+        disabled={homeDisabled}
+        onClick={() => onSelect(match.id, match.home)}
+      />
+
+      <TeamRow
+        team={match.away}
+        active={selected?.name === match.away?.name}
+        disabled={awayDisabled}
+        onClick={() => onSelect(match.id, match.away)}
+      />
+    </div>
+  );
+}
+
+function RoundColumn({
+  title,
+  count,
+  total,
+  matches,
+  selections,
+  onSelect,
+  topClass,
+  gapClass,
+  muted,
+}) {
+  return (
+    <div className={`flex w-80 shrink-0 flex-col ${topClass || ""}`}>
+      <div className="sticky top-0 z-10 mb-5 rounded-b-2xl bg-[linear-gradient(135deg,#f7d774,#b98723)] px-5 py-4 text-center shadow-xl">
+        <div className="text-lg font-black text-black">{title}</div>
+        <div className="mt-1 text-xs font-bold text-black/70">
+          {count} من {total}
+        </div>
+      </div>
+
+      <div className={`flex flex-col ${gapClass || "gap-4"}`}>
+        {matches.map((match) => (
+          <BracketMatch
+            key={match.id}
+            match={match}
+            selected={selections[match.id]}
+            onSelect={onSelect}
+            muted={muted}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function Challenge() {
+  const [round32Selections, setRound32Selections] = useState({});
+  const [round16Selections, setRound16Selections] = useState({});
+  const [quarterSelections, setQuarterSelections] = useState({});
+  const [semiSelections, setSemiSelections] = useState({});
+  const [finalSelections, setFinalSelections] = useState({});
+
+  const round16Dates = [
+    { date: "الأحد، 5 يوليو", time: "00:00 مكة" },
+    { date: "السبت، 4 يوليو", time: "20:00 مكة" },
+    { date: "الإثنين، 6 يوليو", time: "22:00 مكة" },
+    { date: "الثلاثاء، 7 يوليو", time: "03:00 مكة" },
+    { date: "الأربعاء، 8 يوليو", time: "22:00 مكة" },
+    { date: "الخميس، 9 يوليو", time: "23:00 مكة" },
+    { date: "الجمعة، 10 يوليو", time: "22:00 مكة" },
+    { date: "السبت، 11 يوليو", time: "00:00 مكة" },
+  ];
+
+  const quarterDates = [
+    { date: "الخميس، 9 يوليو", time: "23:00 مكة" },
+    { date: "الجمعة، 10 يوليو", time: "22:00 مكة" },
+    { date: "السبت، 11 يوليو", time: "22:00 مكة" },
+    { date: "الأحد، 12 يوليو", time: "03:00 مكة" },
+  ];
+
+  const semiDates = [
+    { date: "الثلاثاء، 14 يوليو", time: "22:00 مكة" },
+    { date: "الأربعاء، 15 يوليو", time: "22:00 مكة" },
+  ];
+
+  const finalDates = [{ date: "الأحد، 19 يوليو", time: "22:00 مكة" }];
+
+  const round32Winners = round32Matches.map((m) => round32Selections[m.id]);
+
+  const round16Matches = useMemo(
+    () => buildNextRound(round32Winners, "r16", "دور الـ16", round16Dates),
+    [round32Selections]
+  );
+
+  const round16Winners = round16Matches.map((m) => round16Selections[m.id]);
+
+  const quarterMatches = useMemo(
+    () =>
+      buildNextRound(round16Winners, "qf", "ربع النهائي", quarterDates),
+    [round16Selections, round16Matches]
+  );
+
+  const quarterWinners = quarterMatches.map((m) => quarterSelections[m.id]);
+
+  const semiMatches = useMemo(
+    () =>
+      buildNextRound(quarterWinners, "sf", "نصف النهائي", semiDates),
+    [quarterSelections, quarterMatches]
+  );
+
+  const semiWinners = semiMatches.map((m) => semiSelections[m.id]);
+
+  const finalMatches = useMemo(
+    () => buildNextRound(semiWinners, "final", "النهائي", finalDates),
+    [semiSelections, semiMatches]
+  );
+
+  const champion = finalMatches[0]
+    ? finalSelections[finalMatches[0].id]
+    : null;
+
+  const selectRound32 = (id, team) => {
+    if (team?.placeholder) return;
+    setRound32Selections((prev) => ({ ...prev, [id]: team }));
+    setRound16Selections({});
+    setQuarterSelections({});
+    setSemiSelections({});
+    setFinalSelections({});
+  };
+
+  const selectRound16 = (id, team) => {
+    if (team?.placeholder) return;
+    setRound16Selections((prev) => ({ ...prev, [id]: team }));
+    setQuarterSelections({});
+    setSemiSelections({});
+    setFinalSelections({});
+  };
+
+  const selectQuarter = (id, team) => {
+    if (team?.placeholder) return;
+    setQuarterSelections((prev) => ({ ...prev, [id]: team }));
+    setSemiSelections({});
+    setFinalSelections({});
+  };
+
+  const selectSemi = (id, team) => {
+    if (team?.placeholder) return;
+    setSemiSelections((prev) => ({ ...prev, [id]: team }));
+    setFinalSelections({});
+  };
+
+  const selectFinal = (id, team) => {
+    if (team?.placeholder) return;
+    setFinalSelections((prev) => ({ ...prev, [id]: team }));
+  };
+
+  const completed = {
+    r32: Object.keys(round32Selections).length,
+    r16: Object.keys(round16Selections).length,
+    qf: Object.keys(quarterSelections).length,
+    sf: Object.keys(semiSelections).length,
+    final: Object.keys(finalSelections).length,
+  };
+
+  const handleSave = () => {
+    if (!champion) {
+      toast.error("أكمل الشجرة واختر البطل أولاً 👑");
+      return;
+    }
+
+    const data = {
+      challengeId: "worldcup2026_round32",
+      round32: round32Selections,
+      round16: round16Selections,
+      quarterFinals: quarterSelections,
+      semiFinals: semiSelections,
+      final: finalSelections,
+      champion,
+      savedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem("king_challenge_prediction", JSON.stringify(data));
+    toast.success(`تم حفظ التحدي 👑 بطلك المتوقع: ${champion.flag} ${champion.name}`);
+  };
+
+  const shareChallenge = async () => {
+    const text = champion
+      ? `أنا توقعت بطل تحدي ملك التوقعات 👑\nبطلي: ${champion.flag} ${champion.name}\nشارك وتحدى معي:\nhttps://king-of-predictions-17019.web.app/challenge`
+      : `شارك في تحدي ملك التوقعات 👑\nhttps://king-of-predictions-17019.web.app/challenge`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "تحدي ملك التوقعات",
+          text,
+        });
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast.success("تم نسخ رابط التحدي");
+      }
+    } catch {
+      toast.error("تعذر مشاركة التحدي");
+    }
+  };
+
+  return (
+    <main dir="rtl" className="min-h-screen bg-[#061522] text-white">
+      <section className="relative overflow-hidden border-b border-yellow-400/20 bg-[#05263d]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,215,0,0.20),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(0,200,255,0.18),transparent_35%)]" />
+
+        <div className="relative mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-right">
+              <div className="text-sm font-bold text-yellow-300">
+                كأس العالم 2026
+              </div>
+
+              <h1 className="mt-1 text-3xl font-black text-white sm:text-4xl">
+                👑 تحدي ملك التوقعات
+              </h1>
+
+              <p className="mt-2 text-sm font-semibold text-white/70">
+                اختر طريق البطل من دور الـ32 حتى النهائي
+              </p>
+            </div>
+
+            <div className="hidden rounded-2xl border border-yellow-400/30 bg-black/25 px-5 py-4 text-center sm:block">
+              <div className="text-xs font-bold text-white/60">
+                البطل المتوقع
+              </div>
+              <div className="mt-1 text-xl font-black text-yellow-300">
+                {champion ? `${champion.flag} ${champion.name}` : "لم يتم الاختيار"}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {[
+              ["دور الـ32", completed.r32, 16],
+              ["دور الـ16", completed.r16, 8],
+              ["ربع النهائي", completed.qf, 4],
+              ["نصف النهائي", completed.sf, 2],
+              ["النهائي", completed.final, 1],
+            ].map(([label, count, total]) => (
+              <div
+                key={label}
+                className="rounded-xl bg-[linear-gradient(135deg,#f7d774,#b98723)] px-4 py-2 text-sm font-black text-black shadow-lg"
+              >
+                {label}
+                <span className="mr-2 rounded-full bg-black/15 px-2 py-0.5 text-xs">
+                  {count}/{total}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleSave}
+              className="rounded-2xl bg-yellow-400 px-6 py-3 font-black text-black shadow-xl transition hover:bg-yellow-300"
+            >
+              حفظ التحدي
+            </button>
+
+            <button
+              type="button"
+              onClick={shareChallenge}
+              className="rounded-2xl border border-white/10 bg-white/10 px-6 py-3 font-black text-white transition hover:bg-white/15"
+            >
+              مشاركة التحدي
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(4,24,40,0.80),rgba(4,24,40,0.90)),radial-gradient(circle_at_center,rgba(255,215,0,0.14),transparent_25%),radial-gradient(circle_at_top_left,rgba(0,180,255,0.18),transparent_30%)]" />
+
+        <div className="relative overflow-x-auto pb-8">
+          <div className="min-w-[1900px] px-5 py-6">
+            <div className="flex items-start gap-10">
+              <RoundColumn
+                title="دور الـ32"
+                count={completed.r32}
+                total={16}
+                matches={round32Matches}
+                selections={round32Selections}
+                onSelect={selectRound32}
+                gapClass="gap-4"
+              />
+
+              <RoundColumn
+                title="دور الـ16"
+                count={completed.r16}
+                total={8}
+                matches={round16Matches}
+                selections={round16Selections}
+                onSelect={selectRound16}
+                topClass="pt-16"
+                gapClass="gap-16"
+                muted={completed.r32 < 16}
+              />
+
+              <RoundColumn
+                title="ربع النهائي"
+                count={completed.qf}
+                total={4}
+                matches={quarterMatches}
+                selections={quarterSelections}
+                onSelect={selectQuarter}
+                topClass="pt-40"
+                gapClass="gap-40"
+                muted={completed.r16 < 8}
+              />
+
+              <RoundColumn
+                title="نصف النهائي"
+                count={completed.sf}
+                total={2}
+                matches={semiMatches}
+                selections={semiSelections}
+                onSelect={selectSemi}
+                topClass="pt-80"
+                gapClass="gap-80"
+                muted={completed.qf < 4}
+              />
+
+              <RoundColumn
+                title="النهائي"
+                count={completed.final}
+                total={1}
+                matches={finalMatches}
+                selections={finalSelections}
+                onSelect={selectFinal}
+                topClass="pt-[430px]"
+                gapClass="gap-4"
+                muted={completed.sf < 2}
+              />
+
+              <div className="w-80 shrink-0 pt-[520px]">
+                <div className="rounded-3xl border border-yellow-400/40 bg-black/45 p-6 text-center shadow-2xl">
+                  <div className="text-6xl">👑</div>
+                  <div className="mt-3 text-sm font-bold text-white/60">
+                    ملك التوقعات
+                  </div>
+                  <div className="mt-2 text-2xl font-black text-yellow-300">
+                    {champion ? `${champion.flag} ${champion.name}` : "البطل"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="pointer-events-none absolute bottom-4 left-0 right-0 mx-auto w-fit rounded-full border border-white/10 bg-black/50 px-4 py-2 text-xs font-bold text-white/60 backdrop-blur">
+          اسحب يمين ويسار لمشاهدة الشجرة كاملة
+        </div>
+      </section>
+    </main>
+  );
+}

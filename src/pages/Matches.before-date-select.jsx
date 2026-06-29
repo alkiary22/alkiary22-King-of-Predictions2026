@@ -106,7 +106,7 @@ export default function Matches() {
       <div className="sticky top-16 z-40 mb-6 border border-gold/20 bg-black/95 backdrop-blur rounded-2xl overflow-hidden shadow-[0_0_25px_rgba(255,215,0,0.15)]">
         <div className="relative h-12 flex items-center overflow-hidden">
           <div className="whitespace-nowrap text-gold font-black text-sm sm:text-base" style={{ animation: "matchesMarquee 18s linear infinite" }}>
-            🏆 الرعاة الرسميون لجائزة ملك التوقعات | ⭐ قيس العدار | ⭐ الياس الخياري | 🏆
+            🏆 الرعاة الرسميون لجائزة ملك التوقعات | ⭐ قيس العدار | ⭐ الياس الخياري | ⭐ حمزة القاضي | 🏆
           </div>
         </div>
         <style>

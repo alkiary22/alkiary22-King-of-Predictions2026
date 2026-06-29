@@ -3,7 +3,8 @@ import { useAuth } from "../context/AuthContext";
 import { useTeams } from "../context/TeamsContext";
 import { useContent } from "../context/ContentContext";
 import { Crown, Trophy, Calendar, Flag, User, LogOut, ShieldCheck, Menu, X, Radio, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import api from "../lib/api";
 import NotificationBell from "./NotificationBell";
 import Avatar from "./Avatar";
 
@@ -16,7 +17,43 @@ export default function Header() {
   const isHome = location.pathname === "/";
   const [open, setOpen] = useState(false);
 
-  const handleLogout = () => {
+  const [marqueeItems,setMarqueeItems]=useState([]);
+  const [currentMarquee,setCurrentMarquee]=useState(0);
+
+  useEffect(()=>{
+    api.get("/marquee")
+      .then(({data})=>{
+        if(Array.isArray(data.items)){
+          setMarqueeItems(data.items.filter(x=>x.enabled));
+        }else{
+          setMarqueeItems([{
+            enabled:true,
+            text:data.text||"",
+            speed:18,
+            textColor:"#FFD700",
+            background:"#000000",
+            fontSize:18
+          }]);
+        }
+      })
+      .catch(()=>{});
+  },[]);
+
+  useEffect(()=>{
+    if(marqueeItems.length<=1) return;
+
+    const t=setInterval(()=>{
+      setCurrentMarquee(v=>(v+1)%marqueeItems.length);
+    },8000);
+
+    return ()=>clearInterval(t);
+  },[marqueeItems]);
+
+
+  
+  
+
+const handleLogout = () => {
     logout();
     navigate("/");
   };
@@ -26,6 +63,7 @@ export default function Header() {
     { to: "/user-predictions", label: "توقعات المستخدمين", icon: Radio },
     { to: "/teams", label: "المنتخبات", icon: Flag },
     { to: "/leaderboard", label: "المتصدرين", icon: Trophy },
+    { to: "/challenge", label: "التحدي 👑", icon: Crown },
   ];
   if (user) links.push({ to: "/profile", label: "حسابي", icon: User });
   if (user?.role === "admin" || user?.role === "supervisor") links.push({ to: "/admin", label: "لوحة الإدارة", icon: ShieldCheck });
@@ -119,8 +157,16 @@ export default function Header() {
       {isHome && (
         <div className="border-b border-gold/20 bg-black overflow-hidden">
           <div className="relative h-11 flex items-center">
-            <div className="whitespace-nowrap animate-[marquee_18s_linear_infinite] text-gold font-black text-sm sm:text-base">
-              🏆 الرعاة الرسميون لجائزة ملك التوقعات | ⭐ قيس العدار | ⭐ الياس الخياري | 🏆
+            <div
+              className="whitespace-nowrap font-black text-sm sm:text-base px-4"
+              style={{
+                color: marqueeItems[currentMarquee]?.textColor || "#FFD700",
+                background: marqueeItems[currentMarquee]?.background || "transparent",
+                fontSize: (marqueeItems[currentMarquee]?.fontSize || 18) + "px",
+                animation: `marquee ${marqueeItems[currentMarquee]?.speed || 18}s linear infinite`
+              }}
+            >
+              {marqueeItems[currentMarquee]?.text || ""}
             </div>
           </div>
           <style>{`

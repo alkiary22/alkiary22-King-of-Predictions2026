@@ -46,6 +46,7 @@ function formatTime(iso) {
 export default function Matches() {
   const { user, refreshUser } = useAuth();
   const { t } = useContent();
+  const [marquee,setMarquee]=useState("🏆 الرعاة الرسميون لجائزة ملك التوقعات");
   const [matches, setMatches] = useState([]);
   const [teamsMap, setTeamsMap] = useState({});
   const [predictions, setPredictions] = useState({});
@@ -66,7 +67,20 @@ export default function Matches() {
       teamsRes.data.forEach((t) => (tm[t.code] = t));
       Object.assign(TEAM_MAP_CACHE, tm);
       setTeamsMap(tm);
-      setMatches(matchesRes.data);
+      setMatches(matchesRes.data.sort((a,b)=>{
+        const order={
+          "دور الـ32":0,
+          "مرحلة المجموعات":1,
+          "دور الـ16":2,
+          "ربع النهائي":3,
+          "نصف النهائي":4,
+          "النهائي":5
+        };
+        const oa=order[a.stage]??99;
+        const ob=order[b.stage]??99;
+        if(oa!==ob)return oa-ob;
+        return new Date(a.kickoff)-new Date(b.kickoff);
+      }));
       const pm = {};
       predsRes.data.forEach((p) => (pm[p.match_id] = p));
       setPredictions(pm);
@@ -77,7 +91,14 @@ export default function Matches() {
     }
   }, [user]);
 
-  useEffect(() => {
+  
+useEffect(() => {
+  api.get("/marquee")
+    .then(r=>setMarquee(r.data?.text || ""))
+    .catch(()=>{});
+}, []);
+
+useEffect(() => {
     loadAll();
   }, [loadAll]);
 
@@ -106,7 +127,7 @@ export default function Matches() {
       <div className="sticky top-16 z-40 mb-6 border border-gold/20 bg-black/95 backdrop-blur rounded-2xl overflow-hidden shadow-[0_0_25px_rgba(255,215,0,0.15)]">
         <div className="relative h-12 flex items-center overflow-hidden">
           <div className="whitespace-nowrap text-gold font-black text-sm sm:text-base" style={{ animation: "matchesMarquee 18s linear infinite" }}>
-            🏆 الرعاة الرسميون لجائزة ملك التوقعات | ⭐ قيس العدار | ⭐ الياس الخياري | 🏆
+            {marquee}
           </div>
         </div>
         <style>
@@ -184,27 +205,40 @@ export default function Matches() {
         </div>
       ) : (
         <div className="space-y-12">
-          {groupedByDate.map(([date, list]) => (
-            <section key={date} data-testid={`date-section-${date}`}>
-              <div className="flex items-center gap-3 mb-5">
-                <Calendar className="w-5 h-5 text-gold" />
-                <h2 className="font-display text-xl font-bold">{formatDateAr(date)}</h2>
-                <span className="text-sm text-zinc-500 font-medium">({list.length} مباراة)</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {list.map((m) => (
-                  <MatchCard
-                    key={m.id}
-                    match={m}
-                    teamsMap={teamsMap}
-                    prediction={predictions[m.id]}
-                    canPredict={!!user}
-                    onSaved={handlePredictionSaved}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
+          {[
+            "دور الـ32",
+            "دور الـ16",
+            "ربع النهائي",
+            "نصف النهائي",
+            "النهائي",
+            "مرحلة المجموعات"
+          ].map(stage => {
+            const list = matches.filter(m => m.stage === stage);
+            if (!list.length) return null;
+
+            return (
+              <section key={stage}>
+                <div className="flex items-center gap-3 mb-5">
+                  <Trophy className="w-5 h-5 text-gold" />
+                  <h2 className="font-display text-xl font-bold">{stage}</h2>
+                  <span className="text-sm text-zinc-500 font-medium">({list.length} مباراة)</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {list.map((m) => (
+                    <MatchCard
+                      key={m.id}
+                      match={m}
+                      teamsMap={teamsMap}
+                      prediction={predictions[m.id]}
+                      canPredict={!!user}
+                      onSaved={handlePredictionSaved}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       )}
     </div>
