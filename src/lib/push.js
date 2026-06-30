@@ -45,6 +45,7 @@ export async function listenForegroundNotifications(onNavigate) {
     const body = payload?.notification?.body || "";
     const url = normalizeUrl(payload?.data?.url || "/");
 
+    if (typeof Notification === "undefined") return;
     if (Notification.permission !== "granted") return;
 
     try {
