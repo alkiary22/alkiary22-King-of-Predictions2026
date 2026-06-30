@@ -11,8 +11,8 @@ function normalizeUrl(url) {
 }
 
 export async function enablePushNotifications() {
-  if (!("Notification" in window)) {
-    throw new Error("هذا المتصفح لا يدعم الإشعارات");
+  if (typeof window === "undefined" || typeof Notification === "undefined") {
+    throw new Error("الإشعارات غير مدعومة على هذا الجهاز");
   }
 
   const permission = await Notification.requestPermission();
