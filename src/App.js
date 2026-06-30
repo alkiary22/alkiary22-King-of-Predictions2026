@@ -26,6 +26,7 @@ import AdminAds from "@/pages/AdminAds";
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { listenForegroundNotifications } from "@/lib/push";
+import { isNative } from "@/lib/platform";
 
 function Layout({ children }) {
   return (
@@ -54,12 +55,12 @@ function PushNavigationBridge() {
       }
     };
 
-    if (navigator.serviceWorker) {
+    if (!isNative && navigator.serviceWorker) {
       navigator.serviceWorker.addEventListener("message", handler);
     }
 
     return () => {
-      if (navigator.serviceWorker) {
+      if (!isNative && navigator.serviceWorker) {
         navigator.serviceWorker.removeEventListener("message", handler);
       }
     };

@@ -1,5 +1,6 @@
 import api from "./api";
 import { getFirebaseMessaging, getToken, onMessage } from "../firebase";
+import { isNative } from "./platform";
 
 const VAPID_KEY = "BA2jrAg39veDM8JCWwP2eQt4K5l7f0wGnYCnuydz0SEELDZ1JPPQWhWUpPAhP0e_DG8vSQ0XLeJq6Ytt5C4NqHM";
 
@@ -11,6 +12,10 @@ function normalizeUrl(url) {
 }
 
 export async function enablePushNotifications() {
+  if (isNative) {
+    console.log("Android native mode - skipping Web Push");
+    return;
+  }
   if (typeof window === "undefined" || typeof Notification === "undefined") {
     throw new Error("الإشعارات غير مدعومة على هذا الجهاز");
   }
@@ -37,6 +42,7 @@ export async function enablePushNotifications() {
 }
 
 export async function listenForegroundNotifications(onNavigate) {
+  if (isNative) return;
   const messaging = await getFirebaseMessaging();
   if (!messaging) return;
 
