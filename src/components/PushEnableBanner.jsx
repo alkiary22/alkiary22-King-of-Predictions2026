@@ -8,7 +8,9 @@ export default function PushEnableBanner() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (Notification?.permission === "granted" && localStorage.getItem("push_enabled") === "1") {
+    if (typeof Notification !== "undefined" &&
+        Notification.permission === "granted" &&
+        localStorage.getItem("push_enabled") === "1") {
       setEnabled(true);
     }
   }, []);
