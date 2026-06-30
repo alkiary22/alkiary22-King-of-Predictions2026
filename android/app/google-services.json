@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "966950889316",
+    "firebase_url": "https://king-of-predictions-17019-default-rtdb.firebaseio.com",
+    "project_id": "king-of-predictions-17019",
+    "storage_bucket": "king-of-predictions-17019.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966950889316:android:0b408caf0f07595ee83c71",
+        "android_client_info": {
+          "package_name": "com.alkiary.hotspotsystem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBh9Q93yPqhowMDCKOCx2f8jXX_Ge-K7fk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966950889316:android:54049f9cbc4fca9fe83c71",
+        "android_client_info": {
+          "package_name": "com.king.predictions"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBh9Q93yPqhowMDCKOCx2f8jXX_Ge-K7fk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

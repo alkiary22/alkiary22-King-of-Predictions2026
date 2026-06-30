@@ -23,7 +23,8 @@ import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
 import AdminAds from "@/pages/AdminAds";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import OfflineScreen from "@/components/OfflineScreen";
 import { Capacitor } from "@capacitor/core";
 import { listenForegroundNotifications } from "@/lib/push";
 import { isNative } from "@/lib/platform";
@@ -71,6 +72,27 @@ function PushNavigationBridge() {
 
 function App() {
   const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter;
+
+  const [online, setOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine
+  );
+
+  useEffect(() => {
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
+  if (!online) {
+    return <OfflineScreen />;
+  }
 
   return (
     <div className="App min-h-screen bg-base text-white">
