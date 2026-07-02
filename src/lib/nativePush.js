@@ -2,6 +2,8 @@ import { PushNotifications } from "@capacitor/push-notifications";
 import api from "./api";
 import { isNative } from "./platform";
 
+const CHANNEL_ID = "king_high";
+
 function normalizeUrl(url) {
   if (!url) return "/";
   const u = String(url).trim();
@@ -9,8 +11,27 @@ function normalizeUrl(url) {
   return u.startsWith("/") ? u : `/${u}`;
 }
 
+async function ensureChannel() {
+  try {
+    await PushNotifications.createChannel({
+      id: CHANNEL_ID,
+      name: "إشعارات ملك التوقعات",
+      description: "إشعارات المباريات والتوقعات",
+      importance: 5,      // IMPORTANCE_HIGH → منبثق مثل واتساب
+      visibility: 1,      // يظهر على شاشة القفل
+      sound: "default",
+      vibration: true,
+      lights: true,
+    });
+  } catch (e) {
+    console.log("createChannel:", e);
+  }
+}
+
 export async function enableNativePush() {
   if (!isNative) return null;
+
+  await ensureChannel();
 
   let perm = await PushNotifications.checkPermissions();
   if (perm.receive === "prompt") {
@@ -36,6 +57,8 @@ export async function enableNativePush() {
 
 export async function listenNativeNotifications(onNavigate) {
   if (!isNative) return;
+
+  await ensureChannel();
 
   await PushNotifications.addListener("pushNotificationReceived", (notification) => {
     console.log("Push received (foreground):", notification);
