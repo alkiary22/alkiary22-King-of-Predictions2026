@@ -27,7 +27,7 @@ import { useEffect, useState } from "react";
 import OfflineScreen from "@/components/OfflineScreen";
 import { Capacitor } from "@capacitor/core";
 import { listenForegroundNotifications } from "@/lib/push";
-import { listenNativeNotifications } from "@/lib/nativePush";
+import { listenNativeNotifications, autoEnableNativePush } from "@/lib/nativePush";
 import { isNative } from "@/lib/platform";
 
 function Layout({ children }) {
@@ -45,6 +45,8 @@ function PushNavigationBridge() {
 
   useEffect(() => {
     // 1) إشعار أثناء فتح التطبيق
+    if (isNative) autoEnableNativePush();
+
     (isNative ? listenNativeNotifications : listenForegroundNotifications)((url) => {
       if (url) navigate(url);
     });

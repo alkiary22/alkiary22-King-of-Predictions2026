@@ -73,3 +73,19 @@ export async function listenNativeNotifications(onNavigate) {
     }
   });
 }
+
+/**
+ * تفعيل تلقائي عند فتح التطبيق (أندرويد فقط)
+ * - يطلب الإذن مباشرة أول مرة
+ * - يجدد التوكن في كل فتح (مفيد لأن توكنات FCM تتغير أحيانًا)
+ * - صامت تمامًا: أي فشل لا يزعج المستخدم
+ */
+export async function autoEnableNativePush() {
+  if (!isNative) return;
+  try {
+    await enableNativePush();
+    console.log("Auto push: enabled");
+  } catch (e) {
+    console.log("Auto push skipped:", e?.message);
+  }
+}
