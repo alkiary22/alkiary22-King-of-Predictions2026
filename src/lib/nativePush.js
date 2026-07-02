@@ -31,7 +31,6 @@ export async function enableNativePush() {
 
   await api.post("/push/register-token", { token, platform: "android" });
   localStorage.setItem("push_enabled", "1");
-  alert("TOKEN:\n" + token);
   return token;
 }
 
