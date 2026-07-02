@@ -3,6 +3,8 @@ import api from "./api";
 import { isNative } from "./platform";
 
 const CHANNEL_ID = "king_high";
+let channelReady = false;
+let registrationDone = false;
 
 function normalizeUrl(url) {
   if (!url) return "/";
@@ -12,17 +14,19 @@ function normalizeUrl(url) {
 }
 
 async function ensureChannel() {
+  if (channelReady) return;
   try {
     await PushNotifications.createChannel({
       id: CHANNEL_ID,
       name: "إشعارات ملك التوقعات",
       description: "إشعارات المباريات والتوقعات",
-      importance: 5,      // IMPORTANCE_HIGH → منبثق مثل واتساب
-      visibility: 1,      // يظهر على شاشة القفل
+      importance: 5,
+      visibility: 1,
       sound: "default",
       vibration: true,
       lights: true,
     });
+    channelReady = true;
   } catch (e) {
     console.log("createChannel:", e);
   }
@@ -41,18 +45,34 @@ export async function enableNativePush() {
     throw new Error("لم يتم السماح بالإشعارات");
   }
 
-  const token = await new Promise((resolve, reject) => {
-    PushNotifications.addListener("registration", (t) => resolve(t.value));
-    PushNotifications.addListener("registrationError", (e) =>
-      reject(new Error(e?.error || "فشل تسجيل الإشعارات"))
-    );
-    PushNotifications.register().catch(reject);
-    setTimeout(() => reject(new Error("انتهت مهلة تسجيل الإشعارات")), 20000);
-  });
+  if (!registrationDone) {
+    registrationDone = true;
+    await PushNotifications.addListener("registration", async (t) => {
+      try {
+        await api.post("/push/register-token", { token: t.value, platform: "android" });
+        localStorage.setItem("push_enabled", "1");
+        console.log("FCM token registered");
+      } catch (e) {
+        console.log("register-token failed:", e?.message);
+      }
+    });
+    await PushNotifications.addListener("registrationError", (e) => {
+      console.log("registrationError:", e);
+    });
+  }
 
-  await api.post("/push/register-token", { token, platform: "android" });
-  localStorage.setItem("push_enabled", "1");
-  return token;
+  await PushNotifications.register();
+  return true;
+}
+
+export async function autoEnableNativePush() {
+  if (!isNative) return;
+  try {
+    await enableNativePush();
+    console.log("Auto push: enabled");
+  } catch (e) {
+    console.log("Auto push skipped:", e?.message);
+  }
 }
 
 export async function listenNativeNotifications(onNavigate) {
@@ -72,20 +92,4 @@ export async function listenNativeNotifications(onNavigate) {
       window.location.href = url;
     }
   });
-}
-
-/**
- * تفعيل تلقائي عند فتح التطبيق (أندرويد فقط)
- * - يطلب الإذن مباشرة أول مرة
- * - يجدد التوكن في كل فتح (مفيد لأن توكنات FCM تتغير أحيانًا)
- * - صامت تمامًا: أي فشل لا يزعج المستخدم
- */
-export async function autoEnableNativePush() {
-  if (!isNative) return;
-  try {
-    await enableNativePush();
-    console.log("Auto push: enabled");
-  } catch (e) {
-    console.log("Auto push skipped:", e?.message);
-  }
 }

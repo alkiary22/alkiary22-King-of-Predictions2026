@@ -45,7 +45,7 @@ function PushNavigationBridge() {
 
   useEffect(() => {
     // 1) إشعار أثناء فتح التطبيق
-    if (isNative) autoEnableNativePush();
+    if (isNative) setTimeout(() => autoEnableNativePush(), 1500);
 
     (isNative ? listenNativeNotifications : listenForegroundNotifications)((url) => {
       if (url) navigate(url);
