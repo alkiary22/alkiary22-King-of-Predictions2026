@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { enablePushNotifications } from "../lib/push";
+import { enableNativePush } from "../lib/nativePush";
+import { isNative } from "../lib/platform";
 
 export default function PushEnableBanner() {
   const [enabled, setEnabled] = useState(() => localStorage.getItem("push_enabled") === "1");
@@ -19,7 +21,7 @@ export default function PushEnableBanner() {
     setLoading(true);
     setMessage("");
     try {
-      await enablePushNotifications();
+      if (isNative) { await enableNativePush(); } else { await enablePushNotifications(); }
       localStorage.setItem("push_enabled", "1");
       setEnabled(true);
       setMessage("تم تفعيل الإشعارات بنجاح ✅");

@@ -5,6 +5,8 @@ import { Trophy, Target, BarChart3, Hash, CheckCircle2, Bell } from "lucide-reac
 import Flag from "../components/Flag";
 import AvatarUploader from "../components/AvatarUploader";
 import { enablePushNotifications } from "../lib/push";
+import { enableNativePush } from "../lib/nativePush";
+import { isNative } from "../lib/platform";
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
@@ -55,7 +57,7 @@ export default function Profile() {
     setPushLoading(true);
     setPushMessage("");
     try {
-      await enablePushNotifications();
+      if (isNative) { await enableNativePush(); } else { await enablePushNotifications(); }
       localStorage.setItem("push_enabled", "1");
       setPushEnabled(true);
       setPushMessage("تم تفعيل إشعارات الجوال بنجاح ✅");
