@@ -56,6 +56,24 @@ const level =
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const { data } = await api.get("/stats/me");
+        if (active) setStats(data);
+      } catch (e) {
+        console.error("Failed to load stats", e);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+
   return (
     <div className="min-h-screen bg-base text-white" data-testid="landing-page">
       {/* Hero */}
@@ -328,4 +346,3 @@ function ScoreItem({ badge, title, desc, variant }) {
     </li>
   );
 }
-
