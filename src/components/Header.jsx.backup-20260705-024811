@@ -71,7 +71,7 @@ const handleLogout = () => {
   return (
     <header
       data-testid="app-header"
-      className="hidden md:block sticky top-0 z-50 backdrop-blur-xl bg-[#0A0A0A]/80 border-b border-white/10"
+      className="sticky top-0 z-50 backdrop-blur-xl bg-[#0A0A0A]/80 border-b border-white/10"
     >
       <nav className="max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link to="/" data-testid="logo-link" className="flex items-center gap-2 group">

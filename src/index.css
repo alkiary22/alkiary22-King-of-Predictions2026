@@ -134,3 +134,269 @@ input[type=number] {
     background-size: 1000px 100%;
     animation: shimmer 1.6s infinite linear;
 }
+
+/* ===== King Predictions Logo Animation ===== */
+
+@keyframes kingGlow {
+  0%,100%{
+    text-shadow:
+      0 0 6px rgba(212,175,55,.25),
+      0 0 18px rgba(212,175,55,.15);
+  }
+  50%{
+    text-shadow:
+      0 0 10px rgba(255,215,0,.9),
+      0 0 24px rgba(255,215,0,.55),
+      0 0 40px rgba(255,215,0,.35);
+  }
+}
+
+@keyframes kingShine {
+  from{
+    background-position:-250px;
+  }
+  to{
+    background-position:250px;
+  }
+}
+
+.logo-king{
+  animation:kingGlow 2.5s ease-in-out infinite;
+}
+
+.logo-shine{
+  background:linear-gradient(
+      90deg,
+      #D4AF37 0%,
+      #fff4b0 45%,
+      #FFD700 50%,
+      #fff4b0 55%,
+      #D4AF37 100%);
+  background-size:250px 100%;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:
+      kingGlow 2.5s ease-in-out infinite,
+      kingShine 3.5s linear infinite;
+}
+
+
+/* ===== Crown Animation ===== */
+
+@keyframes crownFloat{
+  0%,100%{
+    transform:translateY(0) rotate(0deg);
+  }
+  50%{
+    transform:translateY(-2px) rotate(8deg);
+  }
+}
+
+.logo-crown{
+  animation:crownFloat 3s ease-in-out infinite;
+  filter:drop-shadow(0 0 10px rgba(255,215,0,.55));
+}
+
+.logo-title{
+  position:relative;
+  overflow:hidden;
+}
+
+.logo-title::after{
+  content:"";
+  position:absolute;
+  top:-20%;
+  left:-120%;
+  width:45%;
+  height:150%;
+  background:linear-gradient(
+      90deg,
+      transparent,
+      rgba(255,255,255,.75),
+      transparent);
+  transform:skewX(-20deg);
+  animation:logoSweep 4s linear infinite;
+}
+
+@keyframes logoSweep{
+  from{
+    left:-120%;
+  }
+  to{
+    left:140%;
+  }
+}
+
+
+/* ===== Floating Gold Particles ===== */
+
+.logo-title{
+  position:relative;
+}
+
+.logo-title::before,
+.logo-title::after{
+  content:"";
+  position:absolute;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#FFD700;
+  box-shadow:
+    0 0 8px #FFD700,
+    0 0 14px rgba(255,215,0,.7);
+}
+
+.logo-title::before{
+  top:-6px;
+  right:-10px;
+  animation:goldParticle1 4s ease-in-out infinite;
+}
+
+.logo-title::after{
+  bottom:-5px;
+  left:-10px;
+  animation:goldParticle2 5s ease-in-out infinite;
+}
+
+@keyframes goldParticle1{
+  0%,100%{
+    transform:translate(0,0) scale(1);
+    opacity:.25;
+  }
+  50%{
+    transform:translate(-8px,-10px) scale(1.5);
+    opacity:1;
+  }
+}
+
+@keyframes goldParticle2{
+  0%,100%{
+    transform:translate(0,0) scale(.8);
+    opacity:.3;
+  }
+  50%{
+    transform:translate(10px,-8px) scale(1.4);
+    opacity:1;
+  }
+}
+
+
+/* ===== User Card Premium ===== */
+
+@keyframes userCardFloat{
+  0%,100%{
+    transform:translateY(0px);
+    box-shadow:0 0 20px rgba(212,175,55,.12);
+  }
+
+  50%{
+    transform:translateY(-3px);
+    box-shadow:
+      0 8px 30px rgba(212,175,55,.30),
+      0 0 45px rgba(255,215,0,.18);
+  }
+}
+
+.user-card{
+  animation:userCardFloat 4s ease-in-out infinite;
+}
+
+.user-card:hover{
+  transform:translateY(-5px) scale(1.02);
+  transition:.35s;
+}
+
+
+/* ===== Progress Bar Shine ===== */
+
+.progress-shine{
+  position:relative;
+  overflow:hidden;
+}
+
+.progress-shine::after{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-40%;
+  width:35%;
+  height:100%;
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.7),
+    transparent
+  );
+  animation:progressSweep 2.5s linear infinite;
+}
+
+@keyframes progressSweep{
+  from{ left:-40%; }
+  to{ left:140%; }
+}
+
+
+/* ===== CTA Premium Effect ===== */
+
+@keyframes ctaPulse{
+  0%,100%{
+    transform:scale(1);
+    box-shadow:
+      0 0 15px rgba(212,175,55,.25);
+  }
+
+  50%{
+    transform:scale(1.03);
+    box-shadow:
+      0 0 25px rgba(255,215,0,.45),
+      0 0 45px rgba(255,215,0,.25);
+  }
+}
+
+.cta-premium{
+  animation:ctaPulse 2.2s ease-in-out infinite;
+  transition:.3s;
+}
+
+.cta-premium:hover{
+  transform:scale(1.05);
+}
+
+
+/* ===== Royal Aura ===== */
+
+@keyframes royalAura{
+  0%,100%{
+    opacity:.35;
+    transform:scale(1);
+  }
+  50%{
+    opacity:.75;
+    transform:scale(1.08);
+  }
+}
+
+.user-card{
+  position:relative;
+  overflow:hidden;
+}
+
+.user-card::before{
+  content:"";
+  position:absolute;
+  inset:-35%;
+  background:
+    radial-gradient(circle,
+    rgba(255,215,0,.22) 0%,
+    rgba(255,215,0,.10) 35%,
+    transparent 70%);
+  animation:royalAura 4s ease-in-out infinite;
+  pointer-events:none;
+}
+
+.user-card>*{
+  position:relative;
+  z-index:2;
+}
+

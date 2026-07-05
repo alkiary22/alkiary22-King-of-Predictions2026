@@ -1,0 +1,74 @@
+import { Link } from "react-router-dom";
+import {
+  CalendarDays,
+  Trophy,
+  Radio,
+  Flame,
+  ChevronLeft,
+} from "lucide-react";
+
+const cards = [
+  {
+    title: "ابدأ التوقع",
+    desc: "توقع الآن",
+    icon: Flame,
+    to: "/matches",
+    primary: true,
+  },
+  {
+    title: "المباريات",
+    desc: "جميع المباريات",
+    icon: CalendarDays,
+    to: "/matches",
+  },
+  {
+    title: "المتصدرون",
+    desc: "ترتيب المشاركين",
+    icon: Trophy,
+    to: "/leaderboard",
+  },
+  {
+    title: "التوقعات",
+    desc: "توقعات المستخدمين",
+    icon: Radio,
+    to: "/user-predictions",
+  },
+];
+
+export default function HomeDashboard() {
+  return (
+    <section className="px-4 pt-0 pb-16">
+      <div className="grid grid-cols-2 gap-4">
+        {cards.map((card) => {
+          const Icon = card.icon;
+
+          return (
+            <Link
+              key={card.title}
+              to={card.to}
+              className={
+                card.primary
+                  ? "rounded-3xl bg-[#D4AF37] text-black p-6 shadow-[0_0_30px_rgba(212,175,55,.35)]"
+                  : "rounded-3xl bg-[#171717] border border-[#D4AF37]/15 p-6"
+              }
+            >
+              <Icon size={34} />
+
+              <h3 className="mt-5 text-2xl font-black">
+                {card.title}
+              </h3>
+
+              <div className="mt-3 flex items-center justify-between">
+                <span className={card.primary ? "font-bold" : "text-zinc-400"}>
+                  {card.desc}
+                </span>
+
+                {card.primary && <ChevronLeft size={22} />}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}

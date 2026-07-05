@@ -8,7 +8,6 @@ import { ContentProvider } from "@/context/ContentContext";
 
 import Header from "@/components/Header";
 import AndroidBottomNav from "@/components/android/AndroidBottomNav";
-import AndroidTopBar from "@/components/android/AndroidTopBar";
 import AutoUpdate from "@/components/AutoUpdate";
 import ClockWarning from "@/components/ClockWarning";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -37,10 +36,9 @@ function Layout({ children }) {
   return (
     <>
       <Header />
-      <AndroidTopBar />
       <ClockWarning />
 
-      <main className="pb-24 md:pb-0">
+      <main className="pb-24">
         {children}
       </main>
 

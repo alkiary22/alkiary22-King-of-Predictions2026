@@ -1,0 +1,86 @@
+
+<p className="text-zinc-400 mt-2">
+{user ? "استمر في جمع النقاط 👑" : "سجل الدخول للمنافسة"}
+</p>
+
+</div>
+
+<div className="w-16 h-16 rounded-2xl bg-[#D4AF37] flex items-center justify-center">
+
+<Crown
+size={34}
+className="text-black"
+/>
+
+</div>
+
+</div>
+
+{user && (
+
+<>
+
+<div className="flex justify-between mt-6 mb-2">
+
+<span className="text-zinc-400">
+النقاط
+</span>
+
+<span className="text-[#D4AF37] font-black text-xl">
+{user.total_points}
+</span>
+
+</div>
+
+<div className="h-3 rounded-full bg-zinc-800 overflow-hidden">
+
+<div
+className="h-full rounded-full bg-[#D4AF37]"
+style={{
+width:`${Math.min(
+100,
+(user.total_points||0)/10
+)}%`
+}}
+/>
+
+</div>
+
+</>
+
+)}
+
+</div>
+
+<HomeDashboard user={user}/>
+
+{!cd.started && (
+
+<div className="mt-5 rounded-3xl bg-[#151515] border border-[#D4AF37]/20 p-5">
+
+<p className="text-center text-zinc-400 text-sm mb-4">
+
+المباراة الافتتاحية بعد
+
+</p>
+
+<div className="flex justify-center gap-6">
+
+<Slot value={cd.days} label="يوم"/>
+
+<Slot value={cd.hours} label="ساعة"/>
+
+<Slot value={cd.minutes} label="دقيقة"/>
+
+</div>
+
+</div>
+
+)}
+
+</div>
+
+</div>
+
+</section>
+

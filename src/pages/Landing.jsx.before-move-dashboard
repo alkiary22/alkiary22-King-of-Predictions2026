@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../lib/api";
 import AdSlider from "../components/AdSlider";
 import { useAuth } from "../context/AuthContext";
 import { useContent } from "../context/ContentContext";
@@ -12,7 +11,6 @@ import UserCard from "../components/landing/UserCard";
 import CountdownCard from "../components/landing/CountdownCard";
 import QuickActions from "../components/landing/QuickActions";
 import FeatureCard from "../components/landing/FeatureCard";
-import Avatar from "../components/Avatar";
 
 const HERO_BG =
   "https://static.prod-images.emergentagent.com/jobs/36ca7cb1-56bf-4cbb-a9df-d07fc64af674/images/cf694e18d81a1e3b6118c5df05310e8b849aa4f259b4293ec8caeb6d2c40b94f.png";
@@ -32,24 +30,6 @@ export default function Landing() {
   const { user } = useAuth();
   const { t } = useContent();
   const [cd, setCd] = useState(getCountdown());
-const [stats, setStats] = useState(null);
-
-  const points = Number(user?.total_points ?? 0);
-
-    
-const progressColor =
-  points >= 200 ? "linear-gradient(90deg,#FFD700,#FFF4B0,#FFD700)" :
-  points >= 150 ? "#60A5FA" :
-  points >= 100 ? "#D4AF37" :
-  points >= 50 ? "#C0C0C0" :
-  "#CD7F32";
-
-const level =
-      points >= 200 ? "👑 ملك التوقعات" :
-      points >= 150 ? "💎 بلاتيني" :
-      points >= 100 ? "🥇 ذهبي" :
-      points >= 50 ? "🥈 فضي" :
-      "🥉 برونزي";
 
   useEffect(() => {
     const id = setInterval(() => setCd(getCountdown()), 30000);
@@ -59,7 +39,7 @@ const level =
   return (
     <div className="min-h-screen bg-base text-white" data-testid="landing-page">
       {/* Hero */}
-      <section className="relative overflow-hidden min-h-[48vh] lg:min-h-[78vh] flex items-start pt-5">
+      <section className="relative overflow-hidden min-h-auto flex items-start pt-2">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-50"
           style={{ backgroundImage: `url(${HERO_BG})` }}
@@ -69,14 +49,14 @@ const level =
         {/* Decorative glow */}
         <div className="absolute -top-32 right-1/2 translate-x-1/2 w-[40rem] h-[40rem] rounded-full bg-gold/10 blur-[120px] pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 w-full">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-4 w-full">
           <div className="max-w-4xl mx-auto text-center">
             <PushEnableBanner />
             <AdSlider />
 
             {/* Crown badge */}
-            <div className="inline-flex items-center justify-center w-14 h-14 lg:w-20 lg:h-20 rounded-full bg-gold shadow-[0_0_50px_rgba(255,215,0,0.5)] mb-2 animate-fade-in-up">
-              <Crown className="w-8 h-8 lg:w-11 lg:h-11 text-black" strokeWidth={2.3} />
+            <div className="inline-flex items-center justify-center w-12 h-12 lg:w-16 lg:h-16 rounded-full bg-gold shadow-[0_0_50px_rgba(255,215,0,0.5)] mb-2 animate-fade-in-up">
+              <Crown className="w-6 h-6 lg:w-8 lg:h-8 text-black" strokeWidth={2.3} />
             </div>
 
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/30 mb-2 animate-fade-in-up">
@@ -88,90 +68,27 @@ const level =
             </div>
 
             {user ? (
-<div className="mx-auto max-w-md rounded-3xl border border-gold/20 bg-black/40 backdrop-blur-xl p-6 mb-1 shadow-[0_0_40px_rgba(255,215,0,.15)] animate-fade-in-up user-card">
+<div className="mx-auto max-w-md rounded-3xl border border-gold/20 bg-black/40 backdrop-blur-xl p-4 mb-4 shadow-[0_0_40px_rgba(255,215,0,.15)] animate-fade-in-up">
 <div className="flex items-center justify-between">
 <div>
 <p className="text-zinc-400 text-sm">👋 أهلاً بعودتك</p>
-<h2 className="text-3xl font-black text-gold mt-1">{user.name}</h2>
-<p className="text-zinc-300 mt-2">{level}</p>
+<h2 className="text-2xl font-black text-gold mt-1">{user.name}</h2>
+<p className="text-zinc-300 mt-2">المستوى الملكي 👑</p>
 </div>
-<div className="rounded-3xl border-[3px] border-gold p-1.5 shadow-[0_0_35px_rgba(212,175,55,.55)] transition-all duration-300 hover:scale-105">
-  {user?.avatar ? (
-    <Avatar
-      src={user.avatar}
-      name={user.name}
-      size={72}
-    />
-  ) : (
-    <div className="w-14 h-14 rounded-xl bg-gold flex items-center justify-center text-black text-3xl">
-      👑
-    </div>
-  )}
-</div>
+<div className="w-12 h-12 rounded-2xl bg-gold flex items-center justify-center text-black text-3xl">👑</div>
 </div>
 <div className="mt-3">
-
-{stats?.rank && (
-  <div className="mb-3 flex items-center justify-between rounded-xl border border-gold/20 bg-gold/5 px-3 py-2">
-
-    <span className="text-zinc-300 text-sm">
-      🏆 ترتيبك
-    </span>
-
-    <span className="font-black text-gold">
-      #{stats.rank}
-    </span>
-
-  </div>
-)}
-<div className="flex items-center justify-between mb-2">
-
-<span className="text-zinc-300 font-medium">
-النقاط
-</span>
-
-<span className="text-gold font-black text-2xl tracking-wide">
-{user.total_points}
-</span>
-
+<div className="flex justify-between text-sm text-zinc-300 mb-2">
+<span>النقاط</span>
+<span className="font-bold text-gold">{user.total_points}</span>
 </div>
-<div className="h-3 rounded-full bg-zinc-800 overflow-hidden">
-<div
-  className="h-full bg-gold rounded-full progress-shine"
-  style={{
-    width: `${Math.min(
-      ((user?.total_points ?? 0) >= 200
-        ? 100
-        : (((user?.total_points ?? 0) % 50) / 50) * 100),
-      100
-    )}%`,
-  }}
-></div>
+<div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
+<div className="h-full bg-gold rounded-full" style={{width:"72%"}}></div>
 </div>
-
-<div className="flex items-center justify-between mt-2 text-[11px]">
-
-  
-
-  <span className="text-gold font-semibold">
-    {(user?.total_points ?? 0) >= 200
-      ? "👑 وصلت إلى أعلى مستوى"
-      : `🎯 بقي ${
-          50 - ((user?.total_points ?? 0) % 50)
-        } نقطة للوصول إلى ${
-          (user?.total_points ?? 0) >= 150 ? "👑 ملك التوقعات" :
-          (user?.total_points ?? 0) >= 100 ? "💎 بلاتيني" :
-          (user?.total_points ?? 0) >= 50 ? "🥇 ذهبي" :
-          "🥈 فضي"
-        }`}
-  </span>
-
-</div>
-
 </div>
 </div>
 ) : (
-              <h1 className="font-display text-3xl sm:text-5xl lg:text-8xl font-black leading-[1.05] mb-2 animate-fade-in-up">
+              <h1 className="font-display text-2xl sm:text-4xl lg:text-6xl font-black leading-[1.05] mb-2 animate-fade-in-up">
                 <span className="text-white">{t("landing_hero_line1")}</span>
                 <br />
                 <span className="text-gold drop-shadow-[0_0_30px_rgba(255,215,0,0.4)]">
@@ -182,7 +99,7 @@ const level =
               </h1>
             )}
 
-            <p className="text-sm sm:text-xl text-zinc-300 leading-relaxed mb-1 max-w-2xl mx-auto animate-fade-in-up">
+            <p className="text-base sm:text-xl text-zinc-300 leading-relaxed mb-4 max-w-2xl mx-auto animate-fade-in-up">
               {user
                 ? "كأس العالم 2026 على الأبواب — جاهز لتحطيم رقمك القياسي؟"
                 : t("landing_hero_desc")}
@@ -190,7 +107,7 @@ const level =
 
             {/* WC Countdown */}
             {!cd.started && (
-              <div className="inline-flex items-center gap-4 sm:gap-6 px-4 py-3 lg:px-6 lg:py-4 rounded-2xl bg-black/40 backdrop-blur-md border border-gold/20 mb-1 animate-fade-in-up" data-testid="wc-countdown">
+              <div className="inline-flex items-center gap-4 sm:gap-6 px-4 py-3 lg:px-6 lg:py-4 rounded-2xl bg-black/40 backdrop-blur-md border border-gold/20 mb-4 animate-fade-in-up" data-testid="wc-countdown">
                 <div className="text-center">
                   <p className="text-[10px] text-zinc-400 mb-1 uppercase tracking-widest">المباراة الافتتاحية بعد</p>
                   <div className="flex items-center gap-3 sm:gap-5 justify-center">
@@ -204,47 +121,6 @@ const level =
               </div>
             )}
 
-            {/* CTAs */}
-            <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto animate-fade-in-up">
-              {user ? (
-                <>
-                  <Link
-                    to="/matches"
-                    data-testid="cta-go-to-matches"
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gold text-black font-bold text-sm cta-premium hover:bg-yellow-400 active:scale-95 transition-all shadow-[0_8px_40px_rgba(255,215,0,0.35)]"
-                  >
-                    <Flame className="w-4 h-4" />
-                    {t("landing_cta_authenticated")}
-                    <ChevronLeft className="w-4 h-4" />
-                  </Link>
-                  <Link
-                    to="/leaderboard"
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-gold/30 bg-black/30 backdrop-blur text-white font-bold hover:bg-gold/10 transition-colors"
-                  >
-                    <Trophy className="w-4 h-4 text-gold" />
-                    لوحة المتصدرين
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/register"
-                    data-testid="cta-register"
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gold text-black font-bold text-sm cta-premium hover:bg-yellow-400 active:scale-95 transition-all shadow-[0_8px_40px_rgba(255,215,0,0.35)]"
-                  >
-                    {t("landing_cta_register")}
-                    <ChevronLeft className="w-4 h-4" />
-                  </Link>
-                  <Link
-                    to="/login"
-                    data-testid="cta-login"
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-white/20 bg-black/30 backdrop-blur text-white font-medium hover:bg-white/5 transition-colors"
-                  >
-                    {t("landing_cta_login")}
-                  </Link>
-                </>
-              )}
-            </div>
 
             {!user && (
               <p className="text-xs text-zinc-500 mt-3 animate-fade-in-up">
@@ -257,7 +133,7 @@ const level =
 
       <HomeDashboard user={user} />
 
-      {/* Features */}}
+        {/* Features */}
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <FeatureCard icon={Target} title={t("feature_1_title")} desc={t("feature_1_desc")} />
@@ -270,10 +146,10 @@ const level =
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             <div>
               <div className="inline-flex items-center gap-2 mb-4 text-gold">
-                <TrendingUp className="w-4 h-4" />
+                <TrendingUp className="w-5 h-5" />
                 <span className="text-xs font-bold uppercase tracking-widest">{t("scoring_pretitle")}</span>
               </div>
-              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-1">
+              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-6">
                 {t("scoring_title")}
               </h2>
               <ul className="space-y-4">
@@ -322,7 +198,7 @@ function ScoreItem({ badge, title, desc, variant }) {
         {badge}
       </span>
       <div>
-        <p className="font-bold text-sm">{title}</p>
+        <p className="font-bold text-base">{title}</p>
         <p className="text-sm text-zinc-400">{desc}</p>
       </div>
     </li>

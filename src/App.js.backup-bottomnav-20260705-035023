@@ -7,8 +7,6 @@ import { TeamsProvider } from "@/context/TeamsContext";
 import { ContentProvider } from "@/context/ContentContext";
 
 import Header from "@/components/Header";
-import AndroidBottomNav from "@/components/android/AndroidBottomNav";
-import AndroidTopBar from "@/components/android/AndroidTopBar";
 import AutoUpdate from "@/components/AutoUpdate";
 import ClockWarning from "@/components/ClockWarning";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -24,7 +22,6 @@ import Challenge from "@/pages/Challenge";
 import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
 import AdminAds from "@/pages/AdminAds";
-import More from "@/pages/More";
 
 import { useEffect, useState } from "react";
 import OfflineScreen from "@/components/OfflineScreen";
@@ -37,14 +34,8 @@ function Layout({ children }) {
   return (
     <>
       <Header />
-      <AndroidTopBar />
       <ClockWarning />
-
-      <main className="pb-24 md:pb-0">
-        {children}
-      </main>
-
-      <AndroidBottomNav />
+      {children}
     </>
   );
 }
@@ -165,7 +156,6 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-              <Route path="/more" element={<Layout><More /></Layout>} />
               </Routes>
             </Router>
           </TeamsProvider>

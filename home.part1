@@ -1,0 +1,44 @@
+import { Link } from "react-router-dom";
+import {
+  CalendarDays,
+  Trophy,
+  Radio,
+  Flame,
+  ChevronLeft,
+} from "lucide-react";
+
+export default function HomeDashboard() {
+  return (
+    <section className="px-4 pt-2 pb-8">
+
+      <div className="grid grid-cols-2 gap-3">
+
+        <Link
+          to="/leaderboard"
+          className="h-[72px] rounded-2xl bg-[#171717] border border-[#D4AF37]/15 flex items-center justify-center gap-2"
+        >
+          <Trophy
+            className="text-[#D4AF37]"
+            size={20}
+          />
+
+          <span className="font-black text-base">
+            لوحة المتصدرين
+          </span>
+
+        </Link>
+
+        <Link
+          to="/matches"
+          className="h-[72px] rounded-2xl bg-[#D4AF37] text-black flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(212,175,55,.25)]"
+        >
+          <Flame size={20} />
+
+          <span className="font-black text-base">
+            ابدأ التوقع الآن
+          </span>
+
+          <ChevronLeft size={16} />
+
+        </Link>
+

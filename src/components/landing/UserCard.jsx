@@ -1,0 +1,85 @@
+import { Crown, Star } from "lucide-react";
+import Avatar from "../Avatar";
+
+export default function UserCard({ user }) {
+  if (!user) return null;
+
+  const progress = Math.min(
+    100,
+    Math.max(15, (user.total_points || 0) / 50)
+  );
+
+  return (
+    <div className="relative overflow-hidden rounded-3xl border border-[#D4AF37]/20 bg-[#121212]/90 backdrop-blur-xl p-6 shadow-[0_10px_40px_rgba(212,175,55,.18)]">
+
+      <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-[#D4AF37]/10 blur-3xl" />
+
+      <div className="relative flex items-center justify-between">
+
+        <div>
+
+          <p className="text-zinc-400 text-sm">
+            أهلاً بعودتك 👋
+          </p>
+
+          <h2 className="text-3xl font-black text-[#D4AF37] mt-1">
+            {user.name}
+          </h2>
+
+          <div className="flex items-center gap-2 mt-2 text-yellow-400">
+            <Star size={16} fill="currentColor" />
+            <span className="text-sm">
+              المستوى الملكي
+            </span>
+          </div>
+
+        </div>
+
+        <div className="rounded-2xl border-2 border-[#D4AF37] p-1 shadow-[0_0_20px_rgba(212,175,55,.35)]">
+
+          {user.avatar ? (
+            <Avatar
+              src={user.avatar}
+              name={user.name}
+              size={56}
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-xl bg-[#D4AF37] flex items-center justify-center">
+              <Crown className="text-black" size={30} />
+            </div>
+          )}
+
+        </div>
+
+      </div>
+
+      <div className="mt-6">
+
+        <div className="flex justify-between text-sm mb-2">
+
+          <span className="text-zinc-400">
+            النقاط
+          </span>
+
+          <span className="font-black text-[#D4AF37]">
+            {user.total_points}
+          </span>
+
+        </div>
+
+        <div className="h-3 rounded-full bg-zinc-800 overflow-hidden">
+
+          <div
+            className="h-full rounded-full bg-[#D4AF37] transition-all duration-700"
+            style={{
+              width: `${progress}%`,
+            }}
+          />
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}

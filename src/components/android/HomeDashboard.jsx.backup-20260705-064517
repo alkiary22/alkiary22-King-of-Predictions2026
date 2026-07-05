@@ -1,0 +1,48 @@
+import { Link } from "react-router-dom";
+import { CalendarDays, Radio } from "lucide-react";
+
+export default function HomeDashboard() {
+  return (
+    <section className="px-4 pt-1 pb-6">
+
+      <div className="grid grid-cols-2 gap-3">
+
+        <Link
+          to="/matches"
+          className="h-[92px] rounded-2xl bg-[#171717] border border-[#D4AF37]/15 px-5 py-4 flex flex-col justify-between"
+        >
+          <CalendarDays className="text-[#D4AF37]" size={22} />
+
+          <div>
+            <h3 className="text-base font-black">
+              المباريات
+            </h3>
+
+            <p className="text-xs text-zinc-400">
+              جميع المباريات
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          to="/user-predictions"
+          className="h-[92px] rounded-2xl bg-[#171717] border border-[#D4AF37]/15 px-5 py-4 flex flex-col justify-between"
+        >
+          <Radio className="text-[#D4AF37]" size={22} />
+
+          <div>
+            <h3 className="text-base font-black">
+              التوقعات
+            </h3>
+
+            <p className="text-xs text-zinc-400">
+              توقعات المستخدمين
+            </p>
+          </div>
+        </Link>
+
+      </div>
+
+    </section>
+  );
+}
