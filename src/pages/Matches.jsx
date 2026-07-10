@@ -9,8 +9,10 @@ import { useContent } from "../context/ContentContext";
 import { Link } from "react-router-dom";
 import { Calendar, Lock, Trophy, Loader2, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
+import CompetitionTabs from "../components/competitions/CompetitionTabs";
 
 const TEAM_MAP_CACHE = {};
+
 
 // All match times displayed in Mecca/Riyadh time (Asia/Riyadh, UTC+3)
 const MECCA_TZ = "Asia/Riyadh";
@@ -51,6 +53,7 @@ export default function Matches() {
   const [teamsMap, setTeamsMap] = useState({});
   const [predictions, setPredictions] = useState({});
   const [loading, setLoading] = useState(true);
+  const [competition, setCompetition] = useState("all");
   const [selectedDate, setSelectedDate] = useState("ALL");
 
   const loadAll = useCallback(async () => {
@@ -103,7 +106,12 @@ useEffect(() => {
   }, [loadAll]);
 
   const groupedByDate = useMemo(() => {
-    const filtered = selectedDate === "ALL" ? matches : matches.filter((m) => m.match_date === selectedDate);
+    const compMatches = competition === "all"
+      ? matches
+      : matches.filter((m) => (m.competition || "worldcup") === competition);
+    const filtered = selectedDate === "ALL"
+      ? compMatches
+      : compMatches.filter((m) => m.match_date === selectedDate);
     const g = {};
     filtered.forEach((m) => {
       g[m.match_date] = g[m.match_date] || [];
@@ -124,6 +132,13 @@ useEffect(() => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" data-testid="matches-page">
       <AdSlider />
+
+      <div className="mb-8">
+        <CompetitionTabs
+          onChange={setCompetition}
+        />
+      </div>
+
       <div className="sticky top-16 z-40 mb-6 border border-gold/20 bg-black/95 backdrop-blur rounded-2xl overflow-hidden shadow-[0_0_25px_rgba(255,215,0,0.15)]">
         <div className="relative h-12 flex items-center overflow-hidden">
           <div className="whitespace-nowrap text-gold font-black text-sm sm:text-base" style={{ animation: "matchesMarquee 18s linear infinite" }}>

@@ -45,6 +45,24 @@ export default function Admin() {
   const [editUser, setEditUser] = useState(null);
   const [passwordUser, setPasswordUser] = useState(null);
 
+  const [importLeague, setImportLeague] = useState("39");
+  const [importSeason, setImportSeason] = useState(new Date().getFullYear());
+  const [importRound, setImportRound] = useState("");
+  const [importingLeague, setImportingLeague] = useState(false);
+
+  const competitions = [
+    { id: "1", name: "كأس العالم" },
+    { id: "39", name: "الدوري الإنجليزي" },
+    { id: "140", name: "الدوري الإسباني" },
+    { id: "135", name: "الدوري الإيطالي" },
+    { id: "78", name: "الدوري الألماني" },
+    { id: "61", name: "الدوري الفرنسي" },
+    { id: "307", name: "الدوري السعودي" },
+    { id: "2", name: "دوري أبطال أوروبا" },
+    { id: "3", name: "الدوري الأوروبي" },
+    { id: "848", name: "دوري المؤتمر الأوروبي" }
+  ];
+
   const reload = useCallback(async () => {
     setLoading(true);
     try {
@@ -53,7 +71,13 @@ export default function Admin() {
         api.get("/matches"),
         api.get("/admin/last-sync").catch(() => ({ data: null })),
       ]);
+      alert(
+        `إجمالي الفرق: ${t.data.length}\n` +
+        `أندية API: ${t.data.filter(x => x.code.startsWith("af:")).length}`
+      );
+
       setTeams(t.data);
+      console.log("API TEAMS:", t.data.length, t.data.filter(x => x.code.startsWith("af:")).length, t.data);
       setMatches(m.data);
       setLastSync(ls.data);
 
@@ -129,6 +153,52 @@ export default function Admin() {
       setSyncing(false);
     }
   };
+
+  async function handleImportLeague() {
+
+    if (!window.confirm("سيتم استيراد مباريات البطولة بدون حذف أي بيانات. متابعة؟"))
+      return;
+
+    setImportingLeague(true);
+
+    try {
+
+      const body = {
+        league_id: Number(importLeague),
+        season: Number(importSeason)
+      };
+
+      if (importRound.trim())
+        body.round = importRound.trim();
+
+      const { data } = await api.post(
+        "/admin/api-football/import-fixtures",
+        body
+      );
+
+      toast.success(
+        `تم الاستيراد بنجاح
+
+الجديدة: ${data.created}
+
+المحدثة: ${data.updated}
+
+المتخطاة: ${data.skipped}`
+      );
+
+      reload();
+
+    } catch (e) {
+
+      toast.error(apiErrorMessage(e));
+
+    } finally {
+
+      setImportingLeague(false);
+
+    }
+
+  }
 
   const handleSyncResults = async () => {
     setSyncing(true);
@@ -244,7 +314,7 @@ export default function Admin() {
         <TabBtn active={tab === "predictions"} onClick={() => setTab("predictions")} testId="tab-predictions">
           <Eye className="w-4 h-4" /> التوقعات
         </TabBtn>
-                {isFullAdmin && (
+        {isFullAdmin && (
           <TabBtn active={tab === "push"} onClick={() => setTab("push")} testId="tab-push">
             <Bell className="w-4 h-4" /> الإشعارات
           </TabBtn>
@@ -271,6 +341,15 @@ export default function Admin() {
           onEditTime={handleEditTime}
           onDelete={handleDelete}
           isFullAdmin={isFullAdmin}
+          competitions={competitions}
+          importLeague={importLeague}
+          setImportLeague={setImportLeague}
+          importSeason={importSeason}
+          setImportSeason={setImportSeason}
+          importRound={importRound}
+          setImportRound={setImportRound}
+          importingLeague={importingLeague}
+          handleImportLeague={handleImportLeague}
         />
       )}
 
@@ -344,7 +423,30 @@ function TabBtn({ active, onClick, children, testId }) {
   );
 }
 
-function MatchesTab({ loading, matches, teams, lastSync, onSync, syncing, onImportNew, onSeed, onAdd, onResult, onEditTime, onDelete, isFullAdmin }) {
+function MatchesTab({
+  loading,
+  matches,
+  teams,
+  lastSync,
+  onSync,
+  syncing,
+  onImportNew,
+  onSeed,
+  onAdd,
+  onResult,
+  onEditTime,
+  onDelete,
+  isFullAdmin,
+  competitions,
+  importLeague,
+  setImportLeague,
+  importSeason,
+  setImportSeason,
+  importRound,
+  setImportRound,
+  importingLeague,
+  handleImportLeague
+}) {
   const [matchFilter, setMatchFilter] = useState("all");
   const [matchSearch, setMatchSearch] = useState("");
 
@@ -372,6 +474,11 @@ function MatchesTab({ loading, matches, teams, lastSync, onSync, syncing, onImpo
 
     return searchOk && filterOk;
   });
+
+  const seasonOptions = useMemo(() => {
+    const y = new Date().getFullYear();
+    return Array.from({ length: 25 }, (_, i) => (y + 1) - i);
+  }, []);
 
   return (
     <>
@@ -475,6 +582,72 @@ function MatchesTab({ loading, matches, teams, lastSync, onSync, syncing, onImpo
           عرض {filteredMatches.length} من {matches.length} مباراة
         </div>
       </div>
+
+      {isFullAdmin && (
+        <div className="mb-6" data-testid="api-football-import-section">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-display text-xl font-bold">استيراد البطولات (API-Football)</h3>
+          </div>
+
+          <div className="glass-card rounded-2xl p-5 border border-white/10" data-testid="api-football-import-card">
+            <div className="mb-4">
+              <div className="text-zinc-300 font-black">استيراد بطولة جديدة من API-Football</div>
+              <div className="text-xs text-zinc-500 mt-1">سيتم استيراد مباريات البطولة بدون حذف أي بيانات.</div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <FormField label="البطولة">
+                <select
+                  value={importLeague}
+                  onChange={(e) => setImportLeague(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white focus:border-gold outline-none"
+                >
+                  {(competitions || []).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField label="الموسم">
+                <select
+                  value={String(importSeason)}
+                  onChange={(e) => setImportSeason(Number(e.target.value))}
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white focus:border-gold outline-none"
+                >
+                  {seasonOptions.map((y) => (
+                    <option key={y} value={String(y)}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField label="الجولة (اختياري)">
+                <input
+                  type="text"
+                  value={importRound}
+                  onChange={(e) => setImportRound(e.target.value)}
+                  placeholder="مثال: Regular Season - 1"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white focus:border-gold outline-none"
+                />
+              </FormField>
+            </div>
+
+            <div className="pt-4">
+              <button
+                onClick={() => handleImportLeague()}
+                disabled={importingLeague}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-300 font-black hover:bg-blue-500/25 active:scale-95 transition-all disabled:opacity-60"
+              >
+                {importingLeague ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                جلب المباريات
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">
@@ -1166,6 +1339,7 @@ function CreateMatchModal({ teams, onClose, onCreated }) {
   const [kickoff, setKickoff] = useState(defaultKickoff());
   const [stage, setStage] = useState("مرحلة المجموعات");
   const [groupName, setGroup] = useState("");
+  const [competition, setCompetition] = useState("worldcup");
   const [saving, setSaving] = useState(false);
 
   const submit = async (e) => {
@@ -1181,6 +1355,7 @@ function CreateMatchModal({ teams, onClose, onCreated }) {
         away_team: away,
         match_date: date,
         kickoff: `${kickoff}:00+03:00`,
+        competition,
         stage,
         group_name: groupName || null,
       });
@@ -1224,6 +1399,23 @@ function CreateMatchModal({ teams, onClose, onCreated }) {
           </FormField>
         </div>
         <div className="grid grid-cols-2 gap-3">
+          <FormField label="البطولة">
+            <select
+              value={competition}
+              onChange={(e) => setCompetition(e.target.value)}
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white focus:border-gold outline-none"
+            >
+              <option value="worldcup">كأس العالم 2026</option>
+              <option value="saudi">الدوري السعودي</option>
+              <option value="epl">الدوري الإنجليزي</option>
+              <option value="laliga">الدوري الإسباني</option>
+              <option value="seriea">الدوري الإيطالي</option>
+              <option value="bundesliga">الدوري الألماني</option>
+              <option value="ligue1">الدوري الفرنسي</option>
+              <option value="ucl">دوري أبطال أوروبا</option>
+              <option value="uel">الدوري الأوروبي</option>
+            </select>
+          </FormField>
           <FormField label="المرحلة">
             <select
               value={stage}

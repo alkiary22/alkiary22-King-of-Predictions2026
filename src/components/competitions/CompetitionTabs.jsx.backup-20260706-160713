@@ -1,0 +1,50 @@
+import { useState } from "react";
+
+const competitions = [
+  { id: "all", name: "جميع المباريات", icon: "🌍" },
+  { id: "worldcup", name: "كأس العالم 2026", icon: "🏆" },
+  { id: "saudi", name: "الدوري السعودي", icon: "🇸🇦" },
+  { id: "epl", name: "الدوري الإنجليزي", icon: "🏴" },
+  { id: "laliga", name: "الدوري الإسباني", icon: "🇪🇸" },
+  { id: "seriea", name: "الدوري الإيطالي", icon: "🇮🇹" },
+  { id: "bundesliga", name: "الدوري الألماني", icon: "🇩🇪" },
+  { id: "ligue1", name: "الدوري الفرنسي", icon: "🇫🇷" },
+  { id: "ucl", name: "دوري أبطال أوروبا", icon: "⭐" },
+  { id: "uel", name: "الدوري الأوروبي", icon: "🥈" },
+];
+
+export default function CompetitionTabs({ onChange }) {
+  const [selected, setSelected] = useState("all");
+
+  return (
+    <div className="overflow-x-auto no-scrollbar py-2">
+      <div className="flex gap-3 px-1 min-w-max">
+        {competitions.map((item) => {
+          const active = selected === item.id;
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                setSelected(item.id);
+                onChange?.(item.id);
+              }}
+              className={`flex flex-col items-center justify-center w-32 h-32 rounded-3xl border transition-all duration-300 shrink-0
+              ${
+                active
+                  ? "bg-gradient-to-b from-yellow-400 to-yellow-600 border-yellow-300 text-black shadow-[0_0_25px_rgba(255,215,0,.45)] scale-105"
+                  : "bg-zinc-900 border-zinc-700 text-white hover:border-yellow-500"
+              }`}
+            >
+              <div className="text-4xl mb-2">{item.icon}</div>
+
+              <div className="text-sm font-bold text-center leading-5 px-2">
+                {item.name}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
