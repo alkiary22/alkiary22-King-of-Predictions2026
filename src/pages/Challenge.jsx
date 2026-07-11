@@ -1,0 +1,1111 @@
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import api, { apiErrorMessage } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
+import SponsorPopup from "../components/SponsorPopup";
+
+const DEFAULT_ROUND32 = [
+  { id: "r32_1", date: "الإثنين، 29 يونيو", time: "21:30 مكة", home: { name: "ألمانيا", flag: "🇩🇪" }, away: { name: "باراغواي", flag: "🇵🇾" } },
+  { id: "r32_2", date: "الثلاثاء، 30 يونيو", time: "22:00 مكة", home: { name: "فرنسا", flag: "🇫🇷" }, away: { name: "السويد", flag: "🇸🇪" } },
+  { id: "r32_3", date: "الأحد، 28 يونيو", time: "20:00 مكة", home: { name: "جنوب أفريقيا", flag: "🇿🇦" }, away: { name: "كندا", flag: "🇨🇦" } },
+  { id: "r32_4", date: "الثلاثاء، 30 يونيو", time: "02:00 مكة", home: { name: "هولندا", flag: "🇳🇱" }, away: { name: "المغرب", flag: "🇲🇦" } },
+  { id: "r32_5", date: "الجمعة، 3 يوليو", time: "00:00 مكة", home: { name: "البرتغال", flag: "🇵🇹" }, away: { name: "غانا", flag: "🇬🇭" } },
+  { id: "r32_6", date: "الخميس، 2 يوليو", time: "20:00 مكة", home: { name: "إسبانيا", flag: "🇪🇸" }, away: { name: "النمسا", flag: "🇦🇹" } },
+  { id: "r32_7", date: "الخميس، 2 يوليو", time: "01:00 مكة", home: { name: "الولايات المتحدة", flag: "🇺🇸" }, away: { name: "البوسنة والهرسك", flag: "🇧🇦" } },
+  { id: "r32_8", date: "الأربعاء، 1 يوليو", time: "21:00 مكة", home: { name: "بلجيكا", flag: "🇧🇪" }, away: { name: "كوريا الجنوبية", flag: "🇰🇷" } },
+  { id: "r32_9", date: "الاثنين، 29 يونيو", time: "18:00 مكة", home: { name: "البرازيل", flag: "🇧🇷" }, away: { name: "اليابان", flag: "🇯🇵" } },
+  { id: "r32_10", date: "الثلاثاء، 30 يونيو", time: "18:00 مكة", home: { name: "ساحل العاج", flag: "🇨🇮" }, away: { name: "النرويج", flag: "🇳🇴" } },
+  { id: "r32_11", date: "الأربعاء، 1 يوليو", time: "02:00 مكة", home: { name: "المكسيك", flag: "🇲🇽" }, away: { name: "الإكوادور", flag: "🇪🇨" } },
+  { id: "r32_12", date: "الأربعاء، 1 يوليو", time: "17:00 مكة", home: { name: "إنجلترا", flag: "🏴" }, away: { name: "السنغال", flag: "🇸🇳" } },
+  { id: "r32_13", date: "الجمعة، 3 يوليو", time: "23:00 مكة", home: { name: "الأرجنتين", flag: "🇦🇷" }, away: { name: "الرأس الأخضر", flag: "🇨🇻" } },
+  { id: "r32_14", date: "الجمعة، 3 يوليو", time: "19:00 مكة", home: { name: "أستراليا", flag: "🇦🇺" }, away: { name: "مصر", flag: "🇪🇬" } },
+  { id: "r32_15", date: "الجمعة، 3 يوليو", time: "04:00 مكة", home: { name: "سويسرا", flag: "🇨🇭" }, away: { name: "إيران", flag: "🇮🇷" } },
+  { id: "r32_16", date: "السبت، 4 يوليو", time: "02:30 مكة", home: { name: "كولومبيا", flag: "🇨🇴" }, away: { name: "كرواتيا", flag: "🇭🇷" } },
+];
+
+const ROUND16_DATES = [
+  { date: "الأحد، 5 يوليو", time: "00:00 مكة" },
+  { date: "السبت، 4 يوليو", time: "20:00 مكة" },
+  { date: "الإثنين، 6 يوليو", time: "22:00 مكة" },
+  { date: "الثلاثاء، 7 يوليو", time: "03:00 مكة" },
+  { date: "الأربعاء، 8 يوليو", time: "22:00 مكة" },
+  { date: "الخميس، 9 يوليو", time: "23:00 مكة" },
+  { date: "الجمعة، 10 يوليو", time: "22:00 مكة" },
+  { date: "السبت، 11 يوليو", time: "00:00 مكة" },
+];
+
+const QUARTER_DATES = [
+  { date: "الخميس، 9 يوليو", time: "23:00 مكة" },
+  { date: "الجمعة، 10 يوليو", time: "22:00 مكة" },
+  { date: "السبت، 11 يوليو", time: "22:00 مكة" },
+  { date: "الأحد، 12 يوليو", time: "03:00 مكة" },
+];
+
+const SEMI_DATES = [
+  { date: "الثلاثاء، 14 يوليو", time: "22:00 مكة" },
+  { date: "الأربعاء، 15 يوليو", time: "22:00 مكة" },
+];
+
+const FINAL_DATES = [{ date: "الأحد، 19 يوليو", time: "22:00 مكة" }];
+
+// موعد قفل التحدي = بداية أول مباراة في دور الـ32 (توقيت مكة UTC+3)
+const CHALLENGE_LOCK_AT = new Date("2026-06-28T22:00:00+03:00").getTime();
+
+function placeholderTeam(label) {
+  return {
+    name: label,
+    flag: "🏆",
+    placeholder: true,
+  };
+}
+
+function buildNextRound(previousWinners, prefix, label, dates) {
+  const matches = [];
+
+  for (let i = 0; i < previousWinners.length; i += 2) {
+    matches.push({
+      id: `${prefix}_${i / 2 + 1}`,
+      date: dates?.[i / 2]?.date || label,
+      time: dates?.[i / 2]?.time || "",
+      home: previousWinners[i] || placeholderTeam(label),
+      away: previousWinners[i + 1] || placeholderTeam(label),
+    });
+  }
+
+  return matches;
+}
+
+function CountdownBox({ lockAt, locked }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (locked) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [locked]);
+
+  if (locked) {
+    return (
+      <div className="rounded-xl border border-red-400/40 bg-red-950/40 p-3 text-center">
+        <div className="text-xs font-bold text-red-200">حالة التحدي</div>
+        <div className="mt-1 text-lg font-black text-red-300">
+          🔒 انغلق التحدي — انطلقت أول مباراة
+        </div>
+      </div>
+    );
+  }
+
+  const diff = Math.max(0, lockAt - now);
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  const Cell = ({ value, label }) => (
+    <div className="flex min-w-[58px] flex-col items-center rounded-lg bg-black/40 px-2 py-1.5">
+      <div className="text-lg font-black text-yellow-300 sm:text-lg">
+        {String(value).padStart(2, "0")}
+      </div>
+      <div className="text-[10px] font-bold text-white/60">{label}</div>
+    </div>
+  );
+
+  return (
+    <div className="rounded-xl border border-yellow-400/30 bg-black/30 p-3 text-center">
+      <div className="text-xs font-bold text-white/70">
+        ⏳ يغلق التحدي عند انطلاق أول مباراة من دور الـ32
+      </div>
+      <div className="mt-2 flex items-center justify-center gap-2">
+        <Cell value={days} label="يوم" />
+        <Cell value={hours} label="ساعة" />
+        <Cell value={minutes} label="دقيقة" />
+        <Cell value={seconds} label="ثانية" />
+      </div>
+    </div>
+  );
+}
+
+function TeamRow({ team, active, disabled, onClick }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`group flex w-full items-center justify-between gap-2 border-t border-white/10 px-2.5 py-2 text-right transition ${
+        active
+          ? "bg-yellow-400 text-black"
+          : disabled
+          ? "bg-[#285775]/45 text-white/35"
+          : "bg-[#1f5575]/90 text-white hover:bg-[#2b6c91]"
+      }`}
+    >
+      <span
+        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
+          active
+            ? "bg-black text-yellow-300"
+            : disabled
+            ? "bg-white/10 text-white/20"
+            : "bg-white/15 text-white/60"
+        }`}
+      >
+        ✓
+      </span>
+
+      <span className="min-w-0 flex-1 truncate text-xs font-black sm:text-sm">
+        {team.name}
+      </span>
+
+      <span className="text-lg leading-none">{team.flag}</span>
+    </button>
+  );
+}
+
+function AdminEditForm({ value, onCancel, onApply }) {
+  const [form, setForm] = useState(() => ({
+    date: value.date || "",
+    time: value.time || "",
+    homeName: value.home?.name || "",
+    homeFlag: value.home?.flag || "",
+    awayName: value.away?.name || "",
+    awayFlag: value.away?.flag || "",
+  }));
+
+  const update = (key, val) => {
+    setForm((prev) => ({ ...prev, [key]: val }));
+  };
+
+  const apply = () => {
+    if (!form.homeName.trim() || !form.awayName.trim()) {
+      toast.error("أدخل أسماء المنتخبين");
+      return;
+    }
+
+    if (!form.homeFlag.trim() || !form.awayFlag.trim()) {
+      toast.error("أدخل العلمين");
+      return;
+    }
+
+    onApply({
+      ...value,
+      date: form.date.trim(),
+      time: form.time.trim(),
+      home: {
+        name: form.homeName.trim(),
+        flag: form.homeFlag.trim(),
+      },
+      away: {
+        name: form.awayName.trim(),
+        flag: form.awayFlag.trim(),
+      },
+    });
+  };
+
+  return (
+    <div className="border-t border-yellow-400/20 bg-black/35 p-2">
+      <div className="grid grid-cols-2 gap-2">
+        <input value={form.date} onChange={(e) => update("date", e.target.value)} placeholder="التاريخ" className="rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-xs text-white outline-none focus:border-yellow-400" />
+        <input value={form.time} onChange={(e) => update("time", e.target.value)} placeholder="الوقت" className="rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-xs text-white outline-none focus:border-yellow-400" />
+        <input value={form.homeName} onChange={(e) => update("homeName", e.target.value)} placeholder="المنتخب الأول" className="rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-xs text-white outline-none focus:border-yellow-400" />
+        <input value={form.homeFlag} onChange={(e) => update("homeFlag", e.target.value)} placeholder="العلم" className="rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-xs text-white outline-none focus:border-yellow-400" />
+        <input value={form.awayName} onChange={(e) => update("awayName", e.target.value)} placeholder="المنتخب الثاني" className="rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-xs text-white outline-none focus:border-yellow-400" />
+        <input value={form.awayFlag} onChange={(e) => update("awayFlag", e.target.value)} placeholder="العلم" className="rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-xs text-white outline-none focus:border-yellow-400" />
+      </div>
+
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button type="button" onClick={apply} className="rounded-lg bg-yellow-400 px-2 py-1.5 text-xs font-black text-black">
+          تطبيق
+        </button>
+
+        <button type="button" onClick={onCancel} className="rounded-lg bg-white/10 px-2 py-1.5 text-xs font-black text-white">
+          إلغاء
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BracketMatch({
+  match,
+  selected,
+  onSelect,
+  muted,
+  canEdit,
+  editMode,
+  editingId,
+  onStartEdit,
+  onCancelEdit,
+  onApplyEdit,
+}) {
+  const homeDisabled = match.home?.placeholder;
+  const awayDisabled = match.away?.placeholder;
+  const isEditing = editingId === match.id;
+
+  return (
+    <div
+      className={`relative w-44 shrink-0 overflow-hidden rounded-lg border shadow-lg sm:w-48 ${
+        muted
+          ? "border-white/10 opacity-55"
+          : "border-cyan-300/20 shadow-black/30"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2 bg-[#073d5f]/95 px-2 py-1.5 text-right">
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-xs font-black text-white sm:text-sm">
+            {match.date}
+          </div>
+
+          {match.time && (
+            <div className="mt-0.5 text-[10px] font-semibold text-white/75 sm:text-xs">
+              {match.time}
+            </div>
+          )}
+        </div>
+
+        {canEdit && editMode && (
+          <button
+            type="button"
+            onClick={() => onStartEdit(match.id)}
+            className="rounded-md bg-yellow-400 px-2 py-1 text-[10px] font-black text-black"
+          >
+            تعديل
+          </button>
+        )}
+      </div>
+
+      <TeamRow
+        team={match.home}
+        active={selected?.name === match.home?.name}
+        disabled={homeDisabled || isEditing}
+        onClick={() => onSelect(match.id, match.home)}
+      />
+
+      <TeamRow
+        team={match.away}
+        active={selected?.name === match.away?.name}
+        disabled={awayDisabled || isEditing}
+        onClick={() => onSelect(match.id, match.away)}
+      />
+
+      {isEditing && (
+        <AdminEditForm
+          value={match}
+          onCancel={onCancelEdit}
+          onApply={onApplyEdit}
+        />
+      )}
+    </div>
+  );
+}
+
+function RoundColumn({
+  title,
+  count,
+  total,
+  matches,
+  selections,
+  onSelect,
+  topClass,
+  gapClass,
+  muted,
+  canEdit,
+  editMode,
+  editingId,
+  onStartEdit,
+  onCancelEdit,
+  onApplyEdit,
+}) {
+  return (
+    <div className={`flex w-48 shrink-0 flex-col sm:w-52 ${topClass || ""}`}>
+      <div className="sticky top-0 z-10 mb-4 rounded-b-xl bg-[linear-gradient(135deg,#f7d774,#b98723)] px-2 py-1.5.5 text-center shadow-lg">
+        <div className="text-sm font-black text-black sm:text-base">
+          {title}
+        </div>
+
+        <div className="mt-0.5 text-[10px] font-bold text-black/70 sm:text-xs">
+          {count} من {total}
+        </div>
+      </div>
+
+      <div className={`flex flex-col ${gapClass || "gap-3"}`}>
+        {matches.map((match) => (
+          <BracketMatch
+            key={match.id}
+            match={match}
+            selected={selections[match.id]}
+            onSelect={onSelect}
+            muted={muted}
+            canEdit={canEdit}
+            editMode={editMode}
+            editingId={editingId}
+            onStartEdit={onStartEdit}
+            onCancelEdit={onCancelEdit}
+            onApplyEdit={onApplyEdit}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LeaderboardBox({ leaderboard }) {
+  const items = leaderboard?.items || [];
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-black text-yellow-300">
+          🏆 متصدرو التحدي
+        </h3>
+
+        <span className="text-[11px] font-bold text-white/50">
+          {leaderboard?.has_results ? "تم احتساب النقاط" : "بانتظار النتائج"}
+        </span>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="rounded-xl bg-white/5 p-3 text-center text-xs text-white/60">
+          لا يوجد مشاركون حتى الآن
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {items.map((row) => (
+            <div
+              key={row.user_id}
+              className="flex items-center justify-between rounded-xl bg-white/5 px-2 py-1.5"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-xs font-black text-black">
+                  {row.rank}
+                </span>
+
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-black text-white">
+                    {row.name}
+                  </div>
+
+                  <div className="truncate text-[10px] text-white/50">
+                    بطله: {row.champion?.flag || "🏆"} {row.champion?.name || "-"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-sm font-black text-yellow-300">
+                {row.score} نقطة
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function Challenge() {
+  const { user } = useAuth();
+  const isStaff = user?.role === "admin" || user?.role === "supervisor";
+
+  const [round32Matches, setRound32Matches] = useState(DEFAULT_ROUND32);
+  const [loadingBracket, setLoadingBracket] = useState(true);
+  const [savingBracket, setSavingBracket] = useState(false);
+
+  const [editMode, setEditMode] = useState(false);
+  const [resultMode, setResultMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  const [predR32, setPredR32] = useState({});
+  const [predR16, setPredR16] = useState({});
+  const [predQF, setPredQF] = useState({});
+  const [predSF, setPredSF] = useState({});
+  const [predFinal, setPredFinal] = useState({});
+
+  const [resR32, setResR32] = useState({});
+  const [resR16, setResR16] = useState({});
+  const [resQF, setResQF] = useState({});
+  const [resSF, setResSF] = useState({});
+  const [resFinal, setResFinal] = useState({});
+
+  const [myScore, setMyScore] = useState(null);
+  const [leaderboard, setLeaderboard] = useState(null);
+
+  const [isLocked, setIsLocked] = useState(false);
+  const [serverLockAt, setServerLockAt] = useState(null);
+
+  useEffect(() => {
+    async function loadChallengeStatus() {
+      try {
+        const { data } = await api.get("/challenge/status");
+        setIsLocked(!!data.locked);
+        setServerLockAt(data.lock_at);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    loadChallengeStatus();
+  }, []);
+
+  const displayR32 = resultMode ? resR32 : predR32;
+  const displayR16 = resultMode ? resR16 : predR16;
+  const displayQF = resultMode ? resQF : predQF;
+  const displaySF = resultMode ? resSF : predSF;
+  const displayFinal = resultMode ? resFinal : predFinal;
+
+  const resetAllPredictions = () => {
+    setPredR32({});
+    setPredR16({});
+    setPredQF({});
+    setPredSF({});
+    setPredFinal({});
+  };
+
+  const resetAllResults = () => {
+    setResR32({});
+    setResR16({});
+    setResQF({});
+    setResSF({});
+    setResFinal({});
+  };
+
+  const loadLeaderboard = async () => {
+    try {
+      const { data } = await api.get("/challenge/leaderboard");
+      setLeaderboard(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const loadMyScore = async () => {
+    if (!user) return;
+
+    try {
+      const { data } = await api.get("/challenge/my-score");
+      setMyScore(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadBracket() {
+      try {
+        const { data } = await api.get("/challenge/bracket");
+
+        if (!mounted) return;
+
+        if (Array.isArray(data?.matches) && data.matches.length === 16) {
+          const serverMatches = data.matches;
+
+          // الاعتماد على بيانات السيرفر كما هي
+          setRound32Matches(serverMatches);
+
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error("تعذر تحميل بيانات التحدي، سيتم عرض النسخة الافتراضية");
+      } finally {
+        if (mounted) setLoadingBracket(false);
+      }
+    }
+
+    async function loadResults() {
+      try {
+        const { data } = await api.get("/challenge/results");
+        const r = data?.results;
+
+        if (!mounted || !r) return;
+
+        setResR32(r.round32 || {});
+        setResR16(r.round16 || {});
+        setResQF(r.quarterFinals || {});
+        setResSF(r.semiFinals || {});
+        setResFinal(r.final || {});
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    loadBracket();
+    loadResults();
+    loadLeaderboard();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadMine() {
+      if (!user) return;
+
+      try {
+        const { data } = await api.get("/challenge/my-prediction");
+        const p = data?.prediction;
+
+        if (!mounted || !p) return;
+
+        setPredR32(p.round32 || {});
+        setPredR16(p.round16 || {});
+        setPredQF(p.quarterFinals || {});
+        setPredSF(p.semiFinals || {});
+        setPredFinal(p.final || {});
+      } catch (e) {
+        console.error(e);
+      }
+
+      await loadMyScore();
+    }
+
+    loadMine();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id]);
+
+  const applyMatchEdit = (updatedMatch) => {
+    setRound32Matches((prev) =>
+      prev.map((m) => (m.id === updatedMatch.id ? updatedMatch : m))
+    );
+
+    setEditingId(null);
+    resetAllPredictions();
+    resetAllResults();
+
+    toast.success("تم تطبيق التعديل، اضغط حفظ تعديلات المسؤول لنشره");
+  };
+
+  const saveAdminChanges = async () => {
+    if (!isStaff) return;
+
+    try {
+      setSavingBracket(true);
+
+      await api.put("/admin/challenge/bracket", {
+        matches: round32Matches,
+      });
+
+      toast.success("تم حفظ تعديلات المنتخبات لجميع المستخدمين ✅");
+      setEditMode(false);
+      setEditingId(null);
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setSavingBracket(false);
+    }
+  };
+
+  const round32BracketMatches = useMemo(() => {
+  const getIndex = (m) => {
+    const match = String(m?.id ?? "").match(/(\d+)/);
+    return match ? Number(match[1]) : 0;
+  };
+
+  // نحافظ على ترتيب العرض كما هو (round32Matches)، لكن ترتيب التقدم في الشجرة حسب رقم id (r32_1..r32_16)
+  return [...round32Matches].sort((a, b) => getIndex(a) - getIndex(b));
+}, [round32Matches]);
+
+const round32Winners = round32BracketMatches.map((m) => displayR32[m.id]);
+
+  const round16Matches = useMemo(
+    () => buildNextRound(round32Winners, "r16", "دور الـ16", ROUND16_DATES),
+    [displayR32, round32Matches]
+  );
+
+  const round16Winners = round16Matches.map((m) => displayR16[m.id]);
+
+  const quarterMatches = useMemo(
+    () => buildNextRound(round16Winners, "qf", "ربع النهائي", QUARTER_DATES),
+    [displayR16, round16Matches]
+  );
+
+  const quarterWinners = quarterMatches.map((m) => displayQF[m.id]);
+
+  const semiMatches = useMemo(
+    () => buildNextRound(quarterWinners, "sf", "نصف النهائي", SEMI_DATES),
+    [displayQF, quarterMatches]
+  );
+
+  const semiWinners = semiMatches.map((m) => displaySF[m.id]);
+
+  const finalMatches = useMemo(
+    () => buildNextRound(semiWinners, "final", "النهائي", FINAL_DATES),
+    [displaySF, semiMatches]
+  );
+
+  const champion = finalMatches[0] ? displayFinal[finalMatches[0].id] : null;
+
+  const selectRound32 = (id, team) => {
+    if (team?.placeholder || editMode) return;
+    if (isLocked && !resultMode) return;
+
+    if (resultMode) {
+      setResR32((prev) => ({ ...prev, [id]: team }));
+      setResR16({});
+      setResQF({});
+      setResSF({});
+      setResFinal({});
+    } else {
+      setPredR32((prev) => ({ ...prev, [id]: team }));
+      setPredR16({});
+      setPredQF({});
+      setPredSF({});
+      setPredFinal({});
+    }
+  };
+
+  const selectRound16 = (id, team) => {
+    if (team?.placeholder || editMode) return;
+    if (isLocked && !resultMode) return;
+
+    if (resultMode) {
+      setResR16((prev) => ({ ...prev, [id]: team }));
+      setResQF({});
+      setResSF({});
+      setResFinal({});
+    } else {
+      setPredR16((prev) => ({ ...prev, [id]: team }));
+      setPredQF({});
+      setPredSF({});
+      setPredFinal({});
+    }
+  };
+
+  const selectQuarter = (id, team) => {
+    if (team?.placeholder || editMode) return;
+    if (isLocked && !resultMode) return;
+
+    if (resultMode) {
+      setResQF((prev) => ({ ...prev, [id]: team }));
+      setResSF({});
+      setResFinal({});
+    } else {
+      setPredQF((prev) => ({ ...prev, [id]: team }));
+      setPredSF({});
+      setPredFinal({});
+    }
+  };
+
+  const selectSemi = (id, team) => {
+    if (team?.placeholder || editMode) return;
+    if (isLocked && !resultMode) return;
+
+    if (resultMode) {
+      setResSF((prev) => ({ ...prev, [id]: team }));
+      setResFinal({});
+    } else {
+      setPredSF((prev) => ({ ...prev, [id]: team }));
+      setPredFinal({});
+    }
+  };
+
+  const selectFinal = (id, team) => {
+    if (team?.placeholder || editMode) return;
+    if (isLocked && !resultMode) return;
+
+    if (resultMode) {
+      setResFinal((prev) => ({ ...prev, [id]: team }));
+    } else {
+      setPredFinal((prev) => ({ ...prev, [id]: team }));
+    }
+  };
+
+  const completed = {
+    r32: Object.keys(displayR32).length,
+    r16: Object.keys(displayR16).length,
+    qf: Object.keys(displayQF).length,
+    sf: Object.keys(displaySF).length,
+    final: Object.keys(displayFinal).length,
+  };
+
+  const savePrediction = async () => {
+    if (!user) {
+      toast.error("سجل الدخول أولاً لحفظ توقعك");
+      return;
+    }
+
+    if (editMode || resultMode) {
+      toast.error("أغلق وضع التعديل أو النتائج أولاً");
+      return;
+    }
+
+    if (isLocked) {
+      toast.error("انغلق التحدي، لا يمكن تعديل التوقعات");
+      return;
+    }
+
+    try {
+      await api.post("/challenge/prediction", {
+        round32: predR32,
+        round16: predR16,
+        quarterFinals: predQF,
+        semiFinals: predSF,
+        final: predFinal,
+        champion,
+      });
+
+      toast.success(`تم حفظ توقعك 👑 بطلك: ${champion.flag} ${champion.name}`);
+      await loadMyScore();
+      await loadLeaderboard();
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    }
+  };
+
+  const resetResultsFromServer = async () => {
+    if (!isStaff) return;
+    if (!window.confirm("⚠️ هل أنت متأكد من تصفير نتائج التحدي؟ سيتم إرجاع نقاط جميع المشتركين إلى 0 فوراً!")) return;
+    try {
+      await api.post("/admin/challenge/results/reset");
+      toast.success("تم تصفير جميع النتائج والنقاط بنجاح ✅");
+      resetAllResults();
+      await loadMyScore();
+      await loadLeaderboard();
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    }
+  };
+
+
+  const saveResults = async () => {
+    if (!isStaff) return;
+
+    if (!resultMode) {
+      toast.error("فعّل وضع إدخال النتائج أولاً");
+      return;
+    }
+
+    // يسمح بحفظ النتائج تدريجياً
+
+    try {
+      await api.put("/admin/challenge/results", {
+        round32: resR32,
+        round16: resR16,
+        quarterFinals: resQF,
+        semiFinals: resSF,
+        final: resFinal,
+        champion,
+      });
+
+      toast.success("تم حفظ النتائج وحساب المتصدرين ✅");
+      await loadMyScore();
+      await loadLeaderboard();
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    }
+  };
+
+  const shareChallenge = async () => {
+    const text = champion
+      ? `أنا توقعت بطل تحدي ملك التوقعات 👑\nبطلي: ${champion.flag} ${champion.name}\nشارك وتحدى معي:\nhttps://king-of-predictions-17019.web.app/challenge`
+      : `شارك في تحدي ملك التوقعات 👑\nhttps://king-of-predictions-17019.web.app/challenge`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "تحدي ملك التوقعات",
+          text,
+        });
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast.success("تم نسخ رابط التحدي");
+      }
+    } catch {
+      toast.error("تعذر مشاركة التحدي");
+    }
+  };
+
+  return (
+    <main dir="rtl" className="min-h-screen bg-[#061522] text-white">
+      <SponsorPopup />
+      <section className="relative overflow-hidden border-b border-yellow-400/20 bg-[#05263d]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,215,0,0.18),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(0,200,255,0.14),transparent_35%)]" />
+
+        <div className="relative mx-auto flex max-w-7xl flex-col gap-3 px-3 py-4 sm:px-6 sm:py-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-right">
+              <div className="text-xs font-bold text-yellow-300 sm:text-sm">
+                كأس العالم 2026
+              </div>
+
+              <h1 className="mt-1 text-lg font-black text-white sm:text-3xl">
+                👑 تحدي ملك التوقعات
+              </h1>
+
+              <p className="mt-1 text-xs font-semibold text-white/70 sm:text-sm">
+                {resultMode
+                  ? "وضع إدخال النتائج الحقيقيّة مفعل للمسؤول"
+                  : "اختر طريق البطل من دور الـ32 حتى النهائي"}
+              </p>
+
+              {loadingBracket && (
+                <p className="mt-1 text-xs text-yellow-200">
+                  جاري تحميل بيانات التحدي...
+                </p>
+              )}
+            </div>
+
+            <div className="hidden rounded-xl border border-yellow-400/30 bg-black/25 px-4 py-3 text-center sm:block">
+              <div className="text-[10px] font-bold text-white/60">
+                {resultMode ? "البطل الحقيقي" : "البطل المتوقع"}
+              </div>
+
+              <div className="mt-1 text-lg font-black text-yellow-300">
+                {champion
+                  ? `${champion.flag} ${champion.name}`
+                  : "لم يتم الاختيار"}
+              </div>
+            </div>
+          </div>
+
+          <CountdownBox
+            lockAt={serverLockAt ? new Date(serverLockAt).getTime() : CHALLENGE_LOCK_AT}
+            locked={isLocked}
+          />
+
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+              <div className="text-xs font-bold text-white/60">
+                نقاطي في التحدي
+              </div>
+
+              <div className="mt-1 text-3xl font-black text-yellow-300">
+                {myScore?.score ?? 0}
+                <span className="mr-1 text-sm text-white/60">نقطة</span>
+              </div>
+
+              <div className="mt-1 text-[11px] font-bold text-white/50">
+                {myScore?.has_results
+                  ? "تم احتساب النقاط حسب النتائج"
+                  : "النقاط تظهر بعد إدخال النتائج"}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-black/25 p-3 lg:col-span-2">
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {[
+                  ["دور الـ32", completed.r32, 16],
+                  ["دور الـ16", completed.r16, 8],
+                  ["ربع النهائي", completed.qf, 4],
+                  ["نصف النهائي", completed.sf, 2],
+                  ["النهائي", completed.final, 1],
+                ].map(([label, count, total]) => (
+                  <div
+                    key={label}
+                    className="shrink-0 rounded-lg bg-[linear-gradient(135deg,#f7d774,#b98723)] px-3 py-1.5 text-xs font-black text-black shadow-md sm:px-4 sm:py-2 sm:text-sm"
+                  >
+                    {label}
+                    <span className="mr-1 rounded-full bg-black/15 px-1.5 py-0.5 text-[10px]">
+                      {count}/{total}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={savePrediction}
+              disabled={isLocked}
+              className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-black shadow-lg transition sm:flex-none sm:px-6 sm:py-3 ${
+                isLocked
+                  ? "bg-white/10 text-white/40 cursor-not-allowed"
+                  : "bg-yellow-400 text-black hover:bg-yellow-300"
+              }`}
+            >
+              {isLocked ? "🔒 انغلق التحدي" : "حفظ توقعي"}
+            </button>
+
+            <button
+              type="button"
+              onClick={shareChallenge}
+              className="flex-1 rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-sm font-black text-white transition hover:bg-white/15 sm:flex-none sm:px-6 sm:py-3"
+            >
+              مشاركة
+            </button>
+
+            {isStaff && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditMode((v) => !v);
+                    setResultMode(false);
+                    setEditingId(null);
+                  }}
+                  className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-black shadow-lg transition sm:flex-none sm:px-6 sm:py-3 ${
+                    editMode
+                      ? "bg-red-500 text-white"
+                      : "bg-cyan-500 text-black"
+                  }`}
+                >
+                  {editMode ? "إغلاق تعديل المنتخبات" : "تعديل المنتخبات"}
+                </button>
+
+                {editMode && (
+                  <button
+                    type="button"
+                    onClick={saveAdminChanges}
+                    disabled={savingBracket}
+                    className="flex-1 rounded-xl bg-green-500 px-4 py-2.5 text-sm font-black text-black shadow-lg transition hover:bg-green-400 disabled:opacity-60 sm:flex-none sm:px-6 sm:py-3"
+                  >
+                    {savingBracket ? "جاري الحفظ..." : "حفظ تعديلات المنتخبات"}
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResultMode((v) => !v);
+                    setEditMode(false);
+                    setEditingId(null);
+                  }}
+                  className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-black shadow-lg transition sm:flex-none sm:px-6 sm:py-3 ${
+                    resultMode
+                      ? "bg-red-500 text-white"
+                      : "bg-purple-500 text-white"
+                  }`}
+                >
+                  {resultMode ? "إغلاق النتائج" : "إدخال النتائج"}
+                </button>
+
+                {resultMode && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={()=>{alert("saveResults clicked");saveResults();}}
+                      className="flex-1 rounded-xl bg-green-500 px-4 py-2.5 text-sm font-black text-black shadow-lg transition hover:bg-green-400 sm:flex-none sm:px-6 sm:py-3"
+                    >
+                      حفظ النتائج وحساب النقاط
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetResultsFromServer}
+                      className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-black text-white shadow-lg transition hover:bg-red-500 sm:flex-none sm:px-6 sm:py-3"
+                    >
+                      تصفير النتائج والنقاط ⚠️
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+
+          {isStaff && editMode && (
+            <div className="rounded-xl border border-yellow-400/20 bg-black/25 px-2 py-1.5 text-xs font-bold text-yellow-100">
+              وضع تعديل المنتخبات مفعل: اضغط "تعديل" داخل مباريات دور الـ32 ثم احفظ التعديلات.
+            </div>
+          )}
+
+          {isStaff && resultMode && (
+            <div className="rounded-xl border border-purple-400/20 bg-purple-950/30 px-2 py-1.5 text-xs font-bold text-purple-100">
+              وضع النتائج مفعل: اختر المتأهلين الحقيقيين حتى البطل، ثم اضغط "حفظ النتائج وحساب النقاط".
+            </div>
+          )}
+
+          <LeaderboardBox leaderboard={leaderboard} />
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(4,24,40,0.82),rgba(4,24,40,0.92)),radial-gradient(circle_at_center,rgba(255,215,0,0.12),transparent_25%),radial-gradient(circle_at_top_left,rgba(0,180,255,0.14),transparent_30%)]" />
+
+        <div className="relative overflow-x-auto pb-8">
+          <div className="min-w-[1120px] px-3 py-4 sm:min-w-[1280px] sm:px-5 sm:py-5">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <RoundColumn
+                title="دور الـ32"
+                count={completed.r32}
+                total={16}
+                matches={round32Matches}
+                selections={displayR32}
+                onSelect={selectRound32}
+                gapClass="gap-3"
+                canEdit={isStaff}
+                editMode={editMode}
+                editingId={editingId}
+                onStartEdit={setEditingId}
+                onCancelEdit={() => setEditingId(null)}
+                onApplyEdit={applyMatchEdit}
+              />
+
+              <RoundColumn
+                title="دور الـ16"
+                count={completed.r16}
+                total={8}
+                matches={round16Matches}
+                selections={displayR16}
+                onSelect={selectRound16}
+                topClass="pt-8"
+                gapClass="gap-6"
+                muted={completed.r32 < 16}
+              />
+
+              <RoundColumn
+                title="ربع النهائي"
+                count={completed.qf}
+                total={4}
+                matches={quarterMatches}
+                selections={displayQF}
+                onSelect={selectQuarter}
+                topClass="pt-20"
+                gapClass="gap-16"
+                muted={completed.r16 < 8}
+              />
+
+              <RoundColumn
+                title="نصف النهائي"
+                count={completed.sf}
+                total={2}
+                matches={semiMatches}
+                selections={displaySF}
+                onSelect={selectSemi}
+                topClass="pt-40"
+                gapClass="gap-36"
+                muted={completed.qf < 4}
+              />
+
+              <RoundColumn
+                title="النهائي"
+                count={completed.final}
+                total={1}
+                matches={finalMatches}
+                selections={displayFinal}
+                onSelect={selectFinal}
+                topClass="pt-[250px]"
+                gapClass="gap-3"
+                muted={completed.sf < 2}
+              />
+
+              <div className="w-44 shrink-0 pt-[310px] sm:w-48">
+                <div className="rounded-xl border border-yellow-400/40 bg-black/45 p-4 text-center shadow-lg">
+                  <div className="text-3xl">👑</div>
+
+                  <div className="mt-2 text-xs font-bold text-white/60">
+                    {resultMode ? "البطل الحقيقي" : "ملك التوقعات"}
+                  </div>
+
+                  <div className="mt-1 text-lg font-black text-yellow-300">
+                    {champion
+                      ? `${champion.flag} ${champion.name}`
+                      : "البطل"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="pointer-events-none fixed bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-black/55 px-3 py-1.5 text-[10px] font-bold text-white/70 backdrop-blur sm:text-xs">
+          اسحب يمين ويسار لمشاهدة الشجرة
+        </div>
+      </section>
+    </main>
+  );
+}
