@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import api, { apiErrorMessage } from "../lib/api";
 import Flag from "../components/Flag";
-import { Plus, Trash2, Edit2, CheckCircle2, ShieldCheck, Loader2, X, RefreshCw, Download, Users, Shield, UserMinus, FileText, Eye, Bell } from "lucide-react";
+import { Plus, Trash2, Edit2, CheckCircle2, ShieldCheck, Loader2, X, RefreshCw, Download, Users, Shield, UserMinus, FileText, Eye, Bell, Trophy } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import ContentEditor from "../components/ContentEditor";
 import AdminBroadcastPush from "../components/AdminBroadcastPush";
@@ -244,6 +244,9 @@ export default function Admin() {
         <TabBtn active={tab === "predictions"} onClick={() => setTab("predictions")} testId="tab-predictions">
           <Eye className="w-4 h-4" /> التوقعات
         </TabBtn>
+        <TabBtn active={tab === "finalChallenge"} onClick={() => setTab("finalChallenge")} testId="tab-final-challenge">
+          <Trophy className="w-4 h-4" /> تحدي الجائزة
+        </TabBtn>
                 {isFullAdmin && (
           <TabBtn active={tab === "push"} onClick={() => setTab("push")} testId="tab-push">
             <Bell className="w-4 h-4" /> الإشعارات
@@ -292,6 +295,10 @@ export default function Admin() {
 
       {tab === "predictions" && (
         <PredictionsTab matches={matches} teams={teams} />
+      )}
+
+      {tab === "finalChallenge" && (
+        <FinalChallengeAdminTab />
       )}
 
       {createOpen && (
@@ -1573,5 +1580,181 @@ function PredictionRow({ row, teamsMap }) {
       <td className="px-4 py-3">{pointsBadge}</td>
       <td className="px-4 py-3 text-xs text-zinc-400 whitespace-nowrap">{created}</td>
     </tr>
+  );
+}
+
+
+function FinalChallengeAdminTab() {
+  const [entries, setEntries] = useState([]);
+  const [loadingEntries, setLoadingEntries] = useState(true);
+  const [verifyingId, setVerifyingId] = useState(null);
+
+  const loadEntries = useCallback(async () => {
+    setLoadingEntries(true);
+    try {
+      const { data } = await api.get("/admin/final-challenge/entries");
+      setEntries(Array.isArray(data) ? data : []);
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+      setEntries([]);
+    } finally {
+      setLoadingEntries(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEntries();
+  }, [loadEntries]);
+
+  const toggleTamkeen = async (entry) => {
+    const verified = !entry.tamkeen_verified;
+
+    const message = verified
+      ? `تأكيد أن رقم ${entry.phone} مشترك بمحفظة تمكين؟`
+      : `إلغاء تأكيد محفظة تمكين للمستخدم ${entry.name}؟`;
+
+    if (!window.confirm(message)) return;
+
+    setVerifyingId(entry.id);
+
+    try {
+      const { data } = await api.post(
+        `/admin/final-challenge/entries/${entry.id}/tamkeen-verification`,
+        { verified }
+      );
+
+      toast.success(data?.message || "تم تحديث حالة تمكين");
+      await loadEntries();
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
+  return (
+    <div className="space-y-5" dir="rtl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-2xl font-black flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-gold" />
+            تحدي الجائزة
+          </h2>
+          <p className="text-sm text-zinc-400 mt-1">
+            اختيارات المشاركين والتحقق من الاشتراك بمحفظة تمكين
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={loadEntries}
+          disabled={loadingEntries}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 font-bold disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loadingEntries ? "animate-spin" : ""}`} />
+          تحديث
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <AdminStatCard
+          label="المشاركون"
+          value={entries.length}
+          hint="إجمالي الاشتراكات"
+        />
+        <AdminStatCard
+          label="تم التحقق"
+          value={entries.filter((e) => e.tamkeen_verified).length}
+          hint="مشتركون بتمكين"
+        />
+        <AdminStatCard
+          label="بانتظار التحقق"
+          value={entries.filter((e) => !e.tamkeen_verified).length}
+          hint="يحتاج مراجعة"
+        />
+      </div>
+
+      {loadingEntries ? (
+        <div className="py-16 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-gold" />
+        </div>
+      ) : entries.length === 0 ? (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center text-zinc-400">
+          لا توجد اشتراكات في التحدي حتى الآن
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {entries.map((entry) => (
+            <div
+              key={entry.id}
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+            >
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <h3 className="font-black text-lg">{entry.name || "—"}</h3>
+
+                    {entry.tamkeen_verified ? (
+                      <span className="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-black">
+                        ✓ تم التحقق من تمكين
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 rounded-full bg-amber-500/15 text-amber-400 text-xs font-black">
+                        بانتظار التحقق
+                      </span>
+                    )}
+
+                    <span className="px-2 py-1 rounded-full bg-gold/15 text-gold text-xs font-black">
+                      {entry.score || 0} نقطة
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-zinc-400">
+                    رقم محفظة تمكين:
+                    <span className="text-white font-black tabular-nums mr-2">
+                      {entry.phone || "—"}
+                    </span>
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => toggleTamkeen(entry)}
+                  disabled={verifyingId === entry.id}
+                  className={`px-4 py-2.5 rounded-xl font-black text-sm disabled:opacity-50 ${
+                    entry.tamkeen_verified
+                      ? "bg-red-500/15 text-red-400 hover:bg-red-500/25"
+                      : "bg-emerald-500 text-black hover:opacity-90"
+                  }`}
+                >
+                  {verifyingId === entry.id
+                    ? "جاري الحفظ..."
+                    : entry.tamkeen_verified
+                    ? "إلغاء تأكيد تمكين"
+                    : "تأكيد محفظة تمكين"}
+                </button>
+              </div>
+
+              <div className="grid sm:grid-cols-3 gap-3 mt-4">
+                <div className="rounded-xl bg-black/20 border border-white/5 p-3">
+                  <p className="text-xs text-zinc-500 mb-1">🏆 البطل</p>
+                  <p className="font-black text-gold">{entry.champion || "—"}</p>
+                </div>
+
+                <div className="rounded-xl bg-black/20 border border-white/5 p-3">
+                  <p className="text-xs text-zinc-500 mb-1">⭐ أفضل لاعب</p>
+                  <p className="font-black">{entry.best_player || "—"}</p>
+                </div>
+
+                <div className="rounded-xl bg-black/20 border border-white/5 p-3">
+                  <p className="text-xs text-zinc-500 mb-1">⚽ الهداف</p>
+                  <p className="font-black">{entry.top_scorer || "—"}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
