@@ -195,7 +195,7 @@ export default function FinalChallenge() {
               src={
                 sponsorSlide === 0
                   ? "/final-challenge-sponsor.png?v=20260712-2107"
-                  : "/final-challenge-sponsor-2.png"
+                  : "/final-challenge-sponsor-2-v2.png"
               }
               alt={
                 sponsorSlide === 0
