@@ -80,6 +80,7 @@ export default function FinalChallenge() {
 
   const [remaining, setRemaining] = useState(getRemaining);
   const [showSponsorPopup, setShowSponsorPopup] = useState(true);
+  const [sponsorSlide, setSponsorSlide] = useState(0);
   const [leaderboard, setLeaderboard] = useState([]);
   const [saving, setSaving] = useState(false);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
@@ -104,11 +105,18 @@ export default function FinalChallenge() {
   }, []);
 
   useEffect(() => {
-    const sponsorTimer = setTimeout(() => {
-      setShowSponsorPopup(false);
+    const secondSponsorTimer = setTimeout(() => {
+      setSponsorSlide(1);
     }, 3000);
 
-    return () => clearTimeout(sponsorTimer);
+    const closeSponsorTimer = setTimeout(() => {
+      setShowSponsorPopup(false);
+    }, 6000);
+
+    return () => {
+      clearTimeout(secondSponsorTimer);
+      clearTimeout(closeSponsorTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -183,13 +191,25 @@ export default function FinalChallenge() {
             </button>
 
             <img
-              src="/final-challenge-sponsor.png"
-              alt="الراعي الرسمي لتحدي كأس العالم"
-              className="block max-h-[88vh] w-full object-contain"
+              key={sponsorSlide}
+              src={
+                sponsorSlide === 0
+                  ? "/final-challenge-sponsor.png"
+                  : "/final-challenge-sponsor-2.png"
+              }
+              alt={
+                sponsorSlide === 0
+                  ? "الراعي الرسمي لتحدي كأس العالم"
+                  : "الراعي الرسمي لجائزة التحدي"
+              }
+              className="block max-h-[88vh] w-full object-contain animate-[sponsorSlideIn_.45s_ease-out]"
             />
 
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
-              <div className="h-full animate-[sponsorProgress_3s_linear_forwards] bg-[#FFD85A]" />
+              <div
+                key={`progress-${sponsorSlide}`}
+                className="h-full animate-[sponsorProgress_3s_linear_forwards] bg-[#FFD85A]"
+              />
             </div>
           </div>
 
@@ -197,6 +217,19 @@ export default function FinalChallenge() {
             @keyframes sponsorProgress {
               from { width: 100%; }
               to { width: 0%; }
+            }
+
+            @keyframes sponsorSlideIn {
+              from {
+                opacity: 0;
+                transform: scale(1.04);
+                filter: brightness(1.5);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1);
+                filter: brightness(1);
+              }
             }
           `}</style>
         </div>
