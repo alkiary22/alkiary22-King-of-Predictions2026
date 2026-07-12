@@ -1585,15 +1585,34 @@ function PredictionRow({ row, teamsMap }) {
 
 
 function FinalChallengeAdminTab() {
+  const { user: currentUser } = useAuth();
+  const isFullAdmin = currentUser?.role === "admin";
   const [entries, setEntries] = useState([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [verifyingId, setVerifyingId] = useState(null);
+  const [savingResults, setSavingResults] = useState(false);
+  const [results, setResults] = useState({
+    champion: "",
+    best_player: "",
+    top_scorer: "",
+  });
 
   const loadEntries = useCallback(async () => {
     setLoadingEntries(true);
     try {
-      const { data } = await api.get("/admin/final-challenge/entries");
-      setEntries(Array.isArray(data) ? data : []);
+      const [entriesResponse, resultsResponse] = await Promise.all([
+        api.get("/admin/final-challenge/entries"),
+        api.get("/admin/final-challenge/results"),
+      ]);
+
+      setEntries(Array.isArray(entriesResponse.data) ? entriesResponse.data : []);
+
+      const savedResults = resultsResponse.data?.results || {};
+      setResults({
+        champion: savedResults.champion || "",
+        best_player: savedResults.best_player || "",
+        top_scorer: savedResults.top_scorer || "",
+      });
     } catch (e) {
       toast.error(apiErrorMessage(e));
       setEntries([]);
@@ -1605,6 +1624,37 @@ function FinalChallengeAdminTab() {
   useEffect(() => {
     loadEntries();
   }, [loadEntries]);
+
+  const saveChallengeResults = async (event) => {
+    event.preventDefault();
+
+    if (!results.champion.trim() || !results.best_player.trim() || !results.top_scorer.trim()) {
+      toast.error("أدخل البطل وأفضل لاعب والهداف");
+      return;
+    }
+
+    if (!window.confirm("حفظ النتائج وإعادة احتساب نقاط جميع المشاركين؟")) return;
+
+    setSavingResults(true);
+
+    try {
+      const { data } = await api.post("/admin/final-challenge/results", {
+        champion: results.champion.trim(),
+        best_player: results.best_player.trim(),
+        top_scorer: results.top_scorer.trim(),
+      });
+
+      toast.success(
+        data?.message || "تم حفظ النتائج واحتساب نقاط التحدي"
+      );
+
+      await loadEntries();
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setSavingResults(false);
+    }
+  };
 
   const toggleTamkeen = async (entry) => {
     const verified = !entry.tamkeen_verified;
@@ -1655,6 +1705,70 @@ function FinalChallengeAdminTab() {
           تحديث
         </button>
       </div>
+
+      {isFullAdmin && (
+        <form
+          onSubmit={saveChallengeResults}
+          className="rounded-2xl border border-gold/20 bg-gold/[0.04] p-4 sm:p-5"
+        >
+          <div className="mb-4">
+            <h3 className="font-black text-lg text-gold">
+              إدخال النتائج الرسمية للتحدي
+            </h3>
+            <p className="text-xs text-zinc-400 mt-1">
+              عند الحفظ سيتم إعادة احتساب نقاط جميع المشاركين تلقائياً
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-3">
+            <label className="space-y-2">
+              <span className="text-xs font-bold text-zinc-400">🏆 البطل</span>
+              <input
+                value={results.champion}
+                onChange={(e) =>
+                  setResults((prev) => ({ ...prev, champion: e.target.value }))
+                }
+                placeholder="مثال: فرنسا"
+                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-3 outline-none focus:border-gold"
+              />
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-xs font-bold text-zinc-400">⭐ أفضل لاعب</span>
+              <input
+                value={results.best_player}
+                onChange={(e) =>
+                  setResults((prev) => ({ ...prev, best_player: e.target.value }))
+                }
+                placeholder="مثال: كيليان مبابي"
+                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-3 outline-none focus:border-gold"
+              />
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-xs font-bold text-zinc-400">⚽ الهداف</span>
+              <input
+                value={results.top_scorer}
+                onChange={(e) =>
+                  setResults((prev) => ({ ...prev, top_scorer: e.target.value }))
+                }
+                placeholder="مثال: كيليان مبابي"
+                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-3 outline-none focus:border-gold"
+              />
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            disabled={savingResults}
+            className="mt-4 w-full sm:w-auto px-6 py-3 rounded-xl bg-gold text-black font-black disabled:opacity-50"
+          >
+            {savingResults
+              ? "جاري الحفظ واحتساب النقاط..."
+              : "حفظ النتائج واحتساب النقاط"}
+          </button>
+        </form>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <AdminStatCard
