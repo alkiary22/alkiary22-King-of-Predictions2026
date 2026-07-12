@@ -1571,22 +1571,130 @@ function FormField({ label, children }) {
 }
 
 function TeamSelect({ label, value, onChange, teams, testId }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const selected = teams.find((t) => t.code === value);
+
+  const filteredTeams = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return [...teams]
+      .filter((t) => {
+        if (!q) return true;
+
+        return (
+          String(t.name_ar || "").toLowerCase().includes(q) ||
+          String(t.name_en || "").toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) =>
+        String(a.name_ar || a.name_en || "").localeCompare(
+          String(b.name_ar || b.name_en || ""),
+          "ar"
+        )
+      );
+  }, [teams, search]);
+
   return (
     <FormField label={label}>
-      <select
-        required
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        data-testid={testId}
-        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white focus:border-gold outline-none"
-      >
-        <option value="">-- اختر --</option>
-        {teams.map((t) => (
-          <option key={t.code} value={t.code}>
-            {t.name_ar}
-          </option>
-        ))}
-      </select>
+      <div className="relative" data-testid={testId}>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full min-h-[48px] bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-gold outline-none flex items-center gap-3 text-right"
+        >
+          {selected ? (
+            <>
+              {selected.logo ? (
+                <img
+                  src={selected.logo}
+                  alt=""
+                  className="w-8 h-8 object-contain shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-white/10 shrink-0" />
+              )}
+
+              <div className="min-w-0 flex-1">
+                <div className="font-bold truncate">
+                  {selected.name_ar || selected.name_en}
+                </div>
+
+                {selected.name_en &&
+                  selected.name_en !== selected.name_ar && (
+                    <div className="text-[10px] text-zinc-500 truncate" dir="ltr">
+                      {selected.name_en}
+                    </div>
+                  )}
+              </div>
+            </>
+          ) : (
+            <span className="text-zinc-400">-- اختر الفريق --</span>
+          )}
+
+          <span className="text-zinc-500">▼</span>
+        </button>
+
+        {open && (
+          <div className="absolute z-[9999] top-full mt-2 w-full min-w-[260px] bg-zinc-950 border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+            <div className="p-2 border-b border-white/10">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="ابحث بالعربي أو الإنجليزي..."
+                autoFocus
+                className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-gold"
+              />
+            </div>
+
+            <div className="max-h-72 overflow-y-auto">
+              {filteredTeams.map((t) => (
+                <button
+                  key={t.code}
+                  type="button"
+                  onClick={() => {
+                    onChange(t.code);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-right hover:bg-white/10 border-b border-white/5"
+                >
+                  {t.logo ? (
+                    <img
+                      src={t.logo}
+                      alt=""
+                      loading="lazy"
+                      className="w-9 h-9 object-contain shrink-0"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-white/10 shrink-0" />
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-bold text-white truncate">
+                      {t.name_ar || t.name_en}
+                    </div>
+
+                    {t.name_en && t.name_en !== t.name_ar && (
+                      <div className="text-[11px] text-zinc-500 truncate" dir="ltr">
+                        {t.name_en}
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+
+              {filteredTeams.length === 0 && (
+                <div className="p-5 text-center text-zinc-500 text-sm">
+                  لا توجد فرق مطابقة
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </FormField>
   );
 }
