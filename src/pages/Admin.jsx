@@ -1591,6 +1591,7 @@ function FinalChallengeAdminTab() {
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [verifyingId, setVerifyingId] = useState(null);
   const [savingResults, setSavingResults] = useState(false);
+  const [resettingResults, setResettingResults] = useState(false);
   const [results, setResults] = useState({
     champion: "",
     best_player: "",
@@ -1653,6 +1654,46 @@ function FinalChallengeAdminTab() {
       toast.error(apiErrorMessage(e));
     } finally {
       setSavingResults(false);
+    }
+  };
+
+  const resetChallengeResults = async () => {
+    if (
+      !window.confirm(
+        "⚠️ هل أنت متأكد من تصفير نتائج ونقاط تحدي النهائي؟\n\nلن يتم حذف المشاركين أو توقعاتهم أو تأكيدات تمكين."
+      )
+    ) return;
+
+    setResettingResults(true);
+
+    try {
+      const { data } = await api.delete(
+        "/admin/final-challenge/results/reset"
+      );
+
+      setResults({
+        champion: "",
+        best_player: "",
+        top_scorer: "",
+      });
+
+      toast.success(data?.message || "تم تصفير نتائج ونقاط التحدي");
+      await loadEntries();
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setResettingResults(false);
+    }
+  };
+
+  const copyPhone = async (phone) => {
+    if (!phone) return;
+
+    try {
+      await navigator.clipboard.writeText(phone);
+      toast.success(`تم نسخ الرقم: ${phone}`);
+    } catch {
+      toast.error("تعذر نسخ الرقم");
     }
   };
 
@@ -1758,15 +1799,28 @@ function FinalChallengeAdminTab() {
             </label>
           </div>
 
-          <button
-            type="submit"
-            disabled={savingResults}
-            className="mt-4 w-full sm:w-auto px-6 py-3 rounded-xl bg-gold text-black font-black disabled:opacity-50"
-          >
-            {savingResults
-              ? "جاري الحفظ واحتساب النقاط..."
-              : "حفظ النتائج واحتساب النقاط"}
-          </button>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="submit"
+              disabled={savingResults || resettingResults}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gold text-black font-black disabled:opacity-50"
+            >
+              {savingResults
+                ? "جاري الحفظ واحتساب النقاط..."
+                : "حفظ النتائج واحتساب النقاط"}
+            </button>
+
+            <button
+              type="button"
+              onClick={resetChallengeResults}
+              disabled={savingResults || resettingResults}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl border border-red-500/40 bg-red-500/15 text-red-400 font-black hover:bg-red-500/25 disabled:opacity-50"
+            >
+              {resettingResults
+                ? "جاري التصفير..."
+                : "🗑️ تصفير النتائج والنقاط"}
+            </button>
+          </div>
         </form>
       )}
 
@@ -1823,12 +1877,22 @@ function FinalChallengeAdminTab() {
                     </span>
                   </div>
 
-                  <p className="text-sm text-zinc-400">
-                    رقم محفظة تمكين:
-                    <span className="text-white font-black tabular-nums mr-2">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+                    <span>رقم محفظة تمكين:</span>
+                    <span className="text-white font-black tabular-nums">
                       {entry.phone || "—"}
                     </span>
-                  </p>
+
+                    {entry.phone && (
+                      <button
+                        type="button"
+                        onClick={() => copyPhone(entry.phone)}
+                        className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 text-xs font-black text-sky-400 hover:bg-sky-500/20"
+                      >
+                        📋 نسخ الرقم
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <button
