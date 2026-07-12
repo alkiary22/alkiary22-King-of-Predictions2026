@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useContent } from "../context/ContentContext";
 import { Trophy, Crown, Medal, Star } from "lucide-react";
 import Avatar from "../components/Avatar";
+import KingCelebration from "../components/KingCelebration";
 
 export default function Leaderboard() {
   const { user } = useAuth();
@@ -29,6 +30,7 @@ export default function Leaderboard() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-28" data-testid="leaderboard-page">
+      <KingCelebration leader={rows[0]} />
       <div className="sticky top-16 z-40 mb-6 border border-gold/20 bg-black/95 backdrop-blur rounded-2xl overflow-hidden shadow-[0_0_25px_rgba(255,215,0,0.15)]">
         <div className="relative h-12 flex items-center overflow-hidden">
           <div className="whitespace-nowrap text-gold font-black text-sm sm:text-base" style={{ animation: "leaderboardMarquee 18s linear infinite" }}>
