@@ -82,7 +82,10 @@ export default function Matches() {
   }, [loadAll]);
 
   const groupedByDate = useMemo(() => {
-    const filtered = selectedDate === "ALL" ? matches : matches.filter((m) => m.match_date === selectedDate);
+    const activeMatches = matches.filter((m) => m.status !== "finished");
+    const filtered = selectedDate === "ALL"
+      ? activeMatches
+      : activeMatches.filter((m) => m.match_date === selectedDate);
     const g = {};
     filtered.forEach((m) => {
       g[m.match_date] = g[m.match_date] || [];
@@ -92,7 +95,11 @@ export default function Matches() {
   }, [matches, selectedDate]);
 
   const availableDates = useMemo(() => {
-    return Array.from(new Set(matches.map((m) => m.match_date))).sort();
+    return Array.from(new Set(
+      matches
+        .filter((m) => m.status !== "finished")
+        .map((m) => m.match_date)
+    )).sort();
   }, [matches]);
 
   const handlePredictionSaved = (pred) => {
