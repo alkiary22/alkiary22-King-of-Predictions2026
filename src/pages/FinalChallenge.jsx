@@ -54,7 +54,7 @@ export default function FinalChallenge() {
   });
 
   // 14 يوليو 2026 - الساعة 22:00 بتوقيت مكة
-  const CLOSE_AT = new Date("2026-07-14T22:00:00+03:00");
+  const CLOSE_AT = new Date("2026-07-19T22:00:00+03:00");
 
   const getRemaining = () => {
     const diff = CLOSE_AT.getTime() - Date.now();
