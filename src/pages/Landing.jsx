@@ -48,6 +48,71 @@ export default function Landing() {
             <PushEnableBanner />
             <AdSlider />
 
+            {/* Final Challenge Featured Banner */}
+            <Link
+              to="/final-challenge"
+              className="group relative mb-6 block overflow-hidden rounded-[24px] border-2 border-[#FFD85A]/80 bg-gradient-to-r from-[#3b2400] via-[#9a6200] to-[#3b2400] p-[2px] shadow-[0_0_45px_rgba(255,216,90,.45)] transition-all duration-300 hover:scale-[1.02] active:scale-[.98]"
+              data-testid="final-challenge-featured-banner"
+            >
+              <div className="relative overflow-hidden rounded-[21px] bg-gradient-to-br from-[#171005] via-[#080808] to-[#211300] px-4 py-5 sm:px-7 sm:py-6">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,216,90,.20),transparent_60%)]" />
+
+                <div className="pointer-events-none absolute -left-32 top-0 h-full w-24 skew-x-[-25deg] bg-white/30 blur-xl animate-[finalChallengeShine_2.8s_ease-in-out_infinite]" />
+
+                <div className="relative flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3 sm:gap-5">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFF3A0] via-[#FFD85A] to-[#B87800] shadow-[0_0_30px_rgba(255,216,90,.6)] animate-[finalChallengePulse_1.8s_ease-in-out_infinite]">
+                      <Trophy className="h-9 w-9 text-black" strokeWidth={2.4} />
+                    </div>
+
+                    <div className="text-right">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-black text-white shadow-lg animate-pulse">
+                          🔥 تحدي خاص
+                        </span>
+                        <span className="text-[10px] font-black text-[#FFD85A]">
+                          كأس العالم 2026
+                        </span>
+                      </div>
+
+                      <h2 className="text-xl font-black text-white sm:text-3xl">
+                        🏆 تحدي النهائي الكبير
+                      </h2>
+
+                      <p className="mt-1 text-xs font-bold text-zinc-300 sm:text-sm">
+                        توقع البطل والهداف وأفضل لاعب ونافس على الجوائز
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 flex-col items-center gap-1 rounded-2xl bg-[#FFD85A] px-3 py-3 text-black shadow-[0_0_25px_rgba(255,216,90,.45)] sm:px-5">
+                    <span className="text-[10px] font-black sm:text-xs">شارك الآن</span>
+                    <ChevronLeft className="h-6 w-6 transition-transform group-hover:-translate-x-1" />
+                  </div>
+                </div>
+              </div>
+
+              <style>{`
+                @keyframes finalChallengeShine {
+                  0% { left: -35%; opacity: 0; }
+                  20% { opacity: 1; }
+                  55% { left: 125%; opacity: 1; }
+                  100% { left: 125%; opacity: 0; }
+                }
+
+                @keyframes finalChallengePulse {
+                  0%, 100% {
+                    transform: scale(1);
+                    filter: brightness(1);
+                  }
+                  50% {
+                    transform: scale(1.08);
+                    filter: brightness(1.3);
+                  }
+                }
+              `}</style>
+            </Link>
+
             {/* Crown badge */}
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gold shadow-[0_0_50px_rgba(255,215,0,0.5)] mb-2 animate-fade-in-up">
               <Crown className="w-11 h-11 text-black" strokeWidth={2.3} />
