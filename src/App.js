@@ -25,6 +25,8 @@ import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
 import AdminAds from "@/pages/AdminAds";
 import More from "@/pages/More";
+import Competitions from "@/pages/Competitions";
+import CompetitionPage from "@/pages/CompetitionPage";
 
 import { useEffect, useState } from "react";
 import OfflineScreen from "@/components/OfflineScreen";
@@ -165,7 +167,26 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-              <Route path="/more" element={<Layout><More /></Layout>} />
+              
+                <Route
+                  path="/competitions"
+                  element={
+                    <Layout>
+                      <Competitions />
+                    </Layout>
+                  }
+                />
+
+                <Route
+                  path="/competition/:id"
+                  element={
+                    <Layout>
+                      <CompetitionPage />
+                    </Layout>
+                  }
+                />
+
+                <Route path="/more" element={<Layout><More /></Layout>} />
               </Routes>
             </Router>
           </TeamsProvider>

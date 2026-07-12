@@ -14,9 +14,9 @@ const items = [
     icon: House,
   },
   {
-    to: "/matches",
-    title: "المباريات",
-    icon: CalendarDays,
+    to: "/competitions",
+    title: "البطولات",
+    icon: Trophy,
   },
   {
     to: "/challenge",
