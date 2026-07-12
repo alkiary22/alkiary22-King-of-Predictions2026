@@ -1,21 +1,42 @@
 import { useEffect, useState } from "react";
-
-const ads = [
-  { image: "/ads/ad1.jpg", title: "إعلان 1" },
-  { image: "/ads/ad2.jpg", title: "إعلان 2" },
-  { image: "/ads/ad3.jpg", title: "إعلان 3" },
-];
+import api from "../lib/api";
 
 export default function AdSlider() {
+  const [ads, setAds] = useState([]);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
+    async function loadAds() {
+      try {
+        const { data } = await api.get("/ads-slider");
+
+        if (Array.isArray(data.images) && data.images.length) {
+          setAds(
+            data.images.map((img, i) => ({
+              image: img,
+              title: `إعلان ${i + 1}`,
+            }))
+          );
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    loadAds();
+  }, []);
+
+  useEffect(() => {
+    if (ads.length <= 1) return;
+
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % ads.length);
     }, 4000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [ads]);
+
+  if (!ads.length) return null;
 
   const ad = ads[index];
 
@@ -36,7 +57,6 @@ export default function AdSlider() {
               className={`h-2 rounded-full transition-all ${
                 i === index ? "w-9 bg-gold" : "w-4 bg-white/70"
               }`}
-              aria-label={`إعلان ${i + 1}`}
             />
           ))}
         </div>
