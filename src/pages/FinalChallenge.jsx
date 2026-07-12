@@ -266,7 +266,7 @@ export default function FinalChallenge() {
               <div className="text-right">
                 <div className="text-xs text-zinc-400">جائزة التحدي</div>
                 <div className="text-xl font-black text-[#FFD85A]">
-                  جوال واحد 📱
+                  جوالات متعددة 📱
                 </div>
               </div>
             </div>
