@@ -9,6 +9,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: feature/api-football-leagues
+
+      - name: Show exact commit
+        run: |
+          echo "===== BUILDING COMMIT ====="
+          git rev-parse HEAD
+          git log -1 --oneline
 
       - uses: actions/setup-node@v4
         with:
