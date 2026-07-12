@@ -53,7 +53,7 @@ export default function FinalChallenge() {
     topScorer: "",
   });
 
-  // 14 يوليو 2026 - الساعة 22:00 بتوقيت مكة
+  // 19 يوليو 2026 - الساعة 22:00 بتوقيت مكة
   const CLOSE_AT = new Date("2026-07-19T22:00:00+03:00");
 
   const getRemaining = () => {
@@ -284,7 +284,7 @@ export default function FinalChallenge() {
                 موعد إغلاق التوقعات
               </div>
               <p className="mt-1 text-sm leading-6 text-zinc-400">
-                وقت الإغلاق: 14 يوليو 2026 الساعة 10:00 مساءً بتوقيت مكة.
+                وقت الإغلاق: 19 يوليو 2026 الساعة 10:00 مساءً بتوقيت مكة.
               </p>
 
               {remaining.closed ? (
