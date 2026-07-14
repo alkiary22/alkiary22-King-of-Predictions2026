@@ -32,7 +32,15 @@ export default function CompetitionPage() {
         );
 
         if(active){
-          setCompetition(item||null);
+          setCompetition(
+            item
+              ? {
+                  ...item,
+                  current_season: 2026,
+                  effective_season: 2026,
+                }
+              : null
+          );
         }
 
       }catch(e){

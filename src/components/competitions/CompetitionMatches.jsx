@@ -58,7 +58,15 @@ export default function CompetitionMatches({ competition }) {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
 
-  const competitionId = competition?.id;
+  const competitionId =
+    competition?.id ||
+    competition?.apiLeagueId;
+
+  const competitionSeason =
+    competition?.effective_season ||
+    competition?.current_season ||
+    competition?.season ||
+    2026;
 
   useEffect(() => {
 
@@ -74,7 +82,7 @@ export default function CompetitionMatches({ competition }) {
       try {
 
         const { data } = await api.get(
-          `/competitions/${competitionId}/matches`
+          `/competitions/${competitionId}/matches?season=${competitionSeason}`
         );
 
         if (active) {
@@ -108,7 +116,7 @@ export default function CompetitionMatches({ competition }) {
       active = false;
     };
 
-  }, [competitionId]);
+  }, [competitionId, competitionSeason]);
 
   const counts = useMemo(() => {
 
