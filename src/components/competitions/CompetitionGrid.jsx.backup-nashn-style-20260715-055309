@@ -6,13 +6,6 @@ import CompetitionStandings from "./CompetitionStandings";
 import CompetitionTeams from "./CompetitionTeams";
 import CompetitionScorers from "./CompetitionScorers";
 
-import {
-  CalendarDays,
-  BarChart3,
-  Shield,
-  Goal,
-} from "lucide-react";
-
 const FIXED_2026_LEAGUES = [1, 39, 140, 135, 78, 61];
 
 function getSeason(item) {
@@ -45,23 +38,23 @@ function getSeasonLabel(item) {
 const TABS = [
   {
     id: "matches",
-    label: "الجدول",
-    Icon: CalendarDays,
+    label: "المباريات",
+    icon: "▣",
   },
   {
     id: "standings",
-    label: "ترتيب الدوري",
-    Icon: BarChart3,
+    label: "الترتيب",
+    icon: "▥",
   },
   {
     id: "teams",
     label: "الفرق",
-    Icon: Shield,
+    icon: "◉",
   },
   {
     id: "scorers",
-    label: "هدافون",
-    Icon: Goal,
+    label: "الهدافون",
+    icon: "⚽",
   },
 ];
 
@@ -92,26 +85,15 @@ export default function CompetitionGrid() {
             ...item,
             id: String(item.id),
             apiLeagueId: Number(item.id),
-
-            title:
-              item.name_ar ||
-              item.name_en,
-
-            name_ar:
-              item.name_ar ||
-              item.name_en,
-
+            title: item.name_ar || item.name_en,
+            name_ar: item.name_ar || item.name_en,
             name_en: item.name_en,
-
             season: getSeason(item),
             current_season: getSeason(item),
             effective_season: getSeason(item),
-
             seasonLabel: getSeasonLabel(item),
-
             image: item.logo,
             logo: item.logo,
-
             country:
               item.country_ar ||
               item.country ||
@@ -129,8 +111,8 @@ export default function CompetitionGrid() {
 
         setError(
           e?.response?.data?.detail ||
-          e?.message ||
-          "تعذر تحميل البطولات"
+            e?.message ||
+            "تعذر تحميل البطولات"
         );
       } finally {
         if (mounted) {
@@ -224,10 +206,7 @@ export default function CompetitionGrid() {
   }
 
   return (
-    <div
-      dir="rtl"
-      className="w-full"
-    >
+    <div dir="rtl" className="w-full">
       <div
         ref={scrollRef}
         className="
@@ -236,53 +215,49 @@ export default function CompetitionGrid() {
           gap-2.5
           overflow-x-auto
           overscroll-x-contain
-          py-2
+          px-1
+          py-3
           scrollbar-hide
           [-webkit-overflow-scrolling:touch]
         "
       >
         {competitions.map((competition) => {
           const active =
-            competition.id ===
-            selectedCompetition?.id;
+            competition.id === selectedCompetition?.id;
 
           return (
             <button
               key={competition.id}
               type="button"
               onClick={(event) =>
-                selectCompetition(
-                  competition,
-                  event
-                )
+                selectCompetition(competition, event)
               }
               className={`
                 shrink-0
-                h-[62px]
-                min-w-[190px]
-                max-w-[235px]
-                rounded-[21px]
+                h-[68px]
+                min-w-[210px]
+                max-w-[260px]
+                rounded-[22px]
                 border
-                px-3
+                px-4
                 flex
                 items-center
                 justify-center
                 gap-3
                 transition-all
                 duration-300
-
                 ${
                   active
                     ? `
                       border-[#E46C1A]
                       bg-gradient-to-l
-                      from-[#57210D]
-                      via-[#3B180D]
-                      to-[#24120D]
-                      shadow-[0_0_0_1px_rgba(228,108,26,0.18),0_0_25px_rgba(228,108,26,0.12)]
+                      from-[#54200D]
+                      via-[#3A180D]
+                      to-[#24130E]
+                      shadow-[0_0_0_1px_rgba(228,108,26,0.22),0_8px_28px_rgba(228,108,26,0.12)]
                     `
                     : `
-                      border-[#263041]
+                      border-white/10
                       bg-[#111824]
                     `
                 }
@@ -314,15 +289,13 @@ export default function CompetitionGrid() {
 
               <span
                 className={`
-                  text-[16px]
-                  sm:text-[17px]
+                  text-[17px]
                   font-black
                   whitespace-nowrap
-
                   ${
                     active
                       ? "text-white"
-                      : "text-[#9AA4B8]"
+                      : "text-zinc-400"
                   }
                 `}
               >
@@ -335,76 +308,52 @@ export default function CompetitionGrid() {
 
       {selectedCompetition && (
         <>
-          <div className="mt-7">
-            <div
-              className="
-                grid
-                grid-cols-4
-                gap-1.5
-              "
-            >
+          <div className="mt-5 px-1">
+            <div className="flex items-center justify-between gap-2">
               {TABS.map((tab) => {
-                const active =
-                  activeTab === tab.id;
-
-                const Icon = tab.Icon;
+                const active = activeTab === tab.id;
 
                 return (
                   <button
                     key={tab.id}
                     type="button"
-                    onClick={() =>
-                      setActiveTab(tab.id)
-                    }
+                    onClick={() => setActiveTab(tab.id)}
                     className={`
+                      flex-1
                       min-w-0
-                      h-[58px]
-                      rounded-full
+                      h-[62px]
+                      rounded-[22px]
                       border
                       flex
                       items-center
                       justify-center
-                      gap-1
-                      px-1
+                      gap-2
+                      text-[14px]
+                      font-black
+                      whitespace-nowrap
                       transition-all
                       duration-300
-
                       ${
                         active
                           ? `
-                            border-[#3B8B70]
-                            bg-gradient-to-b
-                            from-[#28694F]
-                            to-[#20553F]
-                            text-white
-                            shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08),0_8px_22px_rgba(32,85,63,0.18)]
+                            border-[#D4AF37]/60
+                            bg-[#D4AF37]
+                            text-black
+                            shadow-[0_8px_28px_rgba(212,175,55,0.18)]
                           `
                           : `
-                            border-[#153127]
-                            bg-[#07100D]
-                            text-[#69758B]
+                            border-white/10
+                            bg-[#101010]
+                            text-zinc-500
                           `
                       }
                     `}
                   >
-                    <Icon
-                      size={18}
-                      strokeWidth={2.5}
-                      className="shrink-0"
-                    />
-
-                    <span
-                      className="
-                        text-[10px]
-                        min-[390px]:text-[11px]
-                        sm:text-[13px]
-                        font-black
-                        whitespace-nowrap
-                        leading-none
-                      "
-                    >
-                      {tab.label}
+                    <span className="text-[18px]">
+                      {tab.icon}
                     </span>
+
+                    <span>{tab.label}</span>
                   </button>
                 );
               })}

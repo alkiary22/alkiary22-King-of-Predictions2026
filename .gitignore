@@ -24,3 +24,7 @@ yarn-error.log*
 android/king-predictions.jks
 android/keystore.properties
 src/lib/api.js.backup-before-cache
+
+# Local backup archives
+*.tar.gz
+backups/*.tar.gz

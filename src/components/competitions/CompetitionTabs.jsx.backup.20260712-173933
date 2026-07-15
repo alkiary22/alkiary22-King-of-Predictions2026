@@ -1,0 +1,49 @@
+const tabs = [
+  {
+    id: "matches",
+    title: "المباريات",
+  },
+  {
+    id: "standings",
+    title: "الترتيب",
+  },
+  {
+    id: "teams",
+    title: "الفرق",
+  },
+  {
+    id: "scorers",
+    title: "الهدافون",
+  },
+];
+
+export default function CompetitionTabs({
+  active,
+  onChange,
+}) {
+
+  return (
+
+    <div className="flex gap-3 overflow-x-auto pb-2">
+
+      {tabs.map(tab => (
+
+        <button
+          key={tab.id}
+          onClick={() => onChange(tab.id)}
+          className={
+            active === tab.id
+              ? "px-5 py-3 rounded-2xl bg-[#D4AF37] text-black font-black whitespace-nowrap"
+              : "px-5 py-3 rounded-2xl bg-[#191919] border border-white/10 text-white whitespace-nowrap"
+          }
+        >
+          {tab.title}
+        </button>
+
+      ))}
+
+    </div>
+
+  );
+
+}

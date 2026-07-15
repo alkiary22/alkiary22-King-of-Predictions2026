@@ -1,17 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
-
-import CompetitionMatches from "./CompetitionMatches";
-import CompetitionStandings from "./CompetitionStandings";
-import CompetitionTeams from "./CompetitionTeams";
-import CompetitionScorers from "./CompetitionScorers";
-
-import {
-  CalendarDays,
-  BarChart3,
-  Shield,
-  Goal,
-} from "lucide-react";
 
 const FIXED_2026_LEAGUES = [1, 39, 140, 135, 78, 61];
 
@@ -29,49 +18,26 @@ function getSeason(item) {
   return (
     item?.effective_season ||
     item?.current_season ||
-    item?.season ||
     2026
   );
 }
 
 function getSeasonLabel(item) {
-  if (Number(item?.id) === 2) {
+  const id = Number(item?.id);
+
+  if (id === 2) {
     return "2025/2026";
   }
 
   return String(getSeason(item));
 }
 
-const TABS = [
-  {
-    id: "matches",
-    label: "الجدول",
-    Icon: CalendarDays,
-  },
-  {
-    id: "standings",
-    label: "ترتيب الدوري",
-    Icon: BarChart3,
-  },
-  {
-    id: "teams",
-    label: "الفرق",
-    Icon: Shield,
-  },
-  {
-    id: "scorers",
-    label: "هدافون",
-    Icon: Goal,
-  },
-];
-
 export default function CompetitionGrid() {
+  const navigate = useNavigate();
   const scrollRef = useRef(null);
 
   const [competitions, setCompetitions] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
-  const [activeTab, setActiveTab] = useState("matches");
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -91,27 +57,10 @@ export default function CompetitionGrid() {
           (item) => ({
             ...item,
             id: String(item.id),
-            apiLeagueId: Number(item.id),
-
-            title:
-              item.name_ar ||
-              item.name_en,
-
-            name_ar:
-              item.name_ar ||
-              item.name_en,
-
-            name_en: item.name_en,
-
+            title: item.name_ar || item.name_en,
             season: getSeason(item),
-            current_season: getSeason(item),
-            effective_season: getSeason(item),
-
             seasonLabel: getSeasonLabel(item),
-
             image: item.logo,
-            logo: item.logo,
-
             country:
               item.country_ar ||
               item.country ||
@@ -129,8 +78,8 @@ export default function CompetitionGrid() {
 
         setError(
           e?.response?.data?.detail ||
-          e?.message ||
-          "تعذر تحميل البطولات"
+            e?.message ||
+            "تعذر تحميل البطولات"
         );
       } finally {
         if (mounted) {
@@ -154,7 +103,6 @@ export default function CompetitionGrid() {
 
   function selectCompetition(competition, event) {
     setSelectedId(competition.id);
-    setActiveTab("matches");
 
     event?.currentTarget?.scrollIntoView({
       behavior: "smooth",
@@ -163,39 +111,16 @@ export default function CompetitionGrid() {
     });
   }
 
-  function renderContent() {
-    if (!selectedCompetition) {
-      return null;
-    }
+  function openCompetition() {
+    if (!selectedCompetition) return;
 
-    if (activeTab === "standings") {
-      return (
-        <CompetitionStandings
-          competition={selectedCompetition}
-        />
-      );
-    }
-
-    if (activeTab === "teams") {
-      return (
-        <CompetitionTeams
-          competition={selectedCompetition}
-        />
-      );
-    }
-
-    if (activeTab === "scorers") {
-      return (
-        <CompetitionScorers
-          competition={selectedCompetition}
-        />
-      );
-    }
-
-    return (
-      <CompetitionMatches
-        competition={selectedCompetition}
-      />
+    navigate(
+      `/competitions/${selectedCompetition.id}`,
+      {
+        state: {
+          competition: selectedCompetition,
+        },
+      }
     );
   }
 
@@ -236,15 +161,15 @@ export default function CompetitionGrid() {
           gap-2.5
           overflow-x-auto
           overscroll-x-contain
-          py-2
+          px-1
+          py-3
           scrollbar-hide
           [-webkit-overflow-scrolling:touch]
         "
       >
         {competitions.map((competition) => {
           const active =
-            competition.id ===
-            selectedCompetition?.id;
+            competition.id === selectedCompetition?.id;
 
           return (
             <button
@@ -258,48 +183,52 @@ export default function CompetitionGrid() {
               }
               className={`
                 shrink-0
-                h-[62px]
-                min-w-[190px]
-                max-w-[235px]
-                rounded-[21px]
+                h-[68px]
+                min-w-[210px]
+                max-w-[260px]
+                rounded-[22px]
                 border
-                px-3
+                px-4
                 flex
                 items-center
                 justify-center
                 gap-3
                 transition-all
                 duration-300
-
                 ${
                   active
                     ? `
                       border-[#E46C1A]
                       bg-gradient-to-l
-                      from-[#57210D]
-                      via-[#3B180D]
-                      to-[#24120D]
-                      shadow-[0_0_0_1px_rgba(228,108,26,0.18),0_0_25px_rgba(228,108,26,0.12)]
+                      from-[#54200D]
+                      via-[#3A180D]
+                      to-[#24130E]
+                      shadow-[0_0_0_1px_rgba(228,108,26,0.22),0_8px_28px_rgba(228,108,26,0.12)]
                     `
                     : `
-                      border-[#263041]
+                      border-white/10
                       bg-[#111824]
+                      text-zinc-400
                     `
                 }
               `}
             >
               <div
-                className="
+                className={`
                   w-[46px]
                   h-[46px]
                   shrink-0
                   rounded-[14px]
-                  bg-white
                   flex
                   items-center
                   justify-center
                   overflow-hidden
-                "
+                  ${
+                    active
+                      ? "bg-white"
+                      : "bg-white/95"
+                  }
+                `}
               >
                 <img
                   src={competition.image}
@@ -314,15 +243,15 @@ export default function CompetitionGrid() {
 
               <span
                 className={`
-                  text-[16px]
-                  sm:text-[17px]
+                  text-[17px]
                   font-black
                   whitespace-nowrap
-
+                  overflow-hidden
+                  text-ellipsis
                   ${
                     active
                       ? "text-white"
-                      : "text-[#9AA4B8]"
+                      : "text-zinc-400"
                   }
                 `}
               >
@@ -334,87 +263,103 @@ export default function CompetitionGrid() {
       </div>
 
       {selectedCompetition && (
-        <>
-          <div className="mt-7">
-            <div
+        <div className="mt-5">
+          <div
+            className="
+              rounded-[28px]
+              border
+              border-white/10
+              bg-gradient-to-b
+              from-[#171717]
+              to-[#101010]
+              p-5
+              shadow-[0_18px_50px_rgba(0,0,0,0.25)]
+            "
+          >
+            <div className="flex items-center gap-4">
+              <div
+                className="
+                  w-[76px]
+                  h-[76px]
+                  shrink-0
+                  rounded-[22px]
+                  bg-white
+                  flex
+                  items-center
+                  justify-center
+                  overflow-hidden
+                "
+              >
+                <img
+                  src={selectedCompetition.image}
+                  alt=""
+                  className="
+                    w-[58px]
+                    h-[58px]
+                    object-contain
+                  "
+                />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <h2
+                  className="
+                    text-[23px]
+                    font-black
+                    text-white
+                    truncate
+                  "
+                >
+                  {selectedCompetition.title}
+                </h2>
+
+                <div className="mt-2 text-sm text-zinc-400">
+                  {selectedCompetition.country}
+                </div>
+
+                <div
+                  className="
+                    mt-2
+                    inline-flex
+                    items-center
+                    rounded-full
+                    border
+                    border-[#D4AF37]/20
+                    bg-[#D4AF37]/10
+                    px-3
+                    py-1
+                    text-xs
+                    font-bold
+                    text-[#D4AF37]
+                  "
+                >
+                  موسم {selectedCompetition.seasonLabel}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={openCompetition}
               className="
-                grid
-                grid-cols-4
-                gap-1.5
+                mt-5
+                w-full
+                h-[54px]
+                rounded-[18px]
+                border
+                border-[#D4AF37]/30
+                bg-[#D4AF37]
+                text-black
+                text-[17px]
+                font-black
+                transition
+                active:scale-[0.98]
               "
             >
-              {TABS.map((tab) => {
-                const active =
-                  activeTab === tab.id;
-
-                const Icon = tab.Icon;
-
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() =>
-                      setActiveTab(tab.id)
-                    }
-                    className={`
-                      min-w-0
-                      h-[58px]
-                      rounded-full
-                      border
-                      flex
-                      items-center
-                      justify-center
-                      gap-1
-                      px-1
-                      transition-all
-                      duration-300
-
-                      ${
-                        active
-                          ? `
-                            border-[#3B8B70]
-                            bg-gradient-to-b
-                            from-[#28694F]
-                            to-[#20553F]
-                            text-white
-                            shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08),0_8px_22px_rgba(32,85,63,0.18)]
-                          `
-                          : `
-                            border-[#153127]
-                            bg-[#07100D]
-                            text-[#69758B]
-                          `
-                      }
-                    `}
-                  >
-                    <Icon
-                      size={18}
-                      strokeWidth={2.5}
-                      className="shrink-0"
-                    />
-
-                    <span
-                      className="
-                        text-[10px]
-                        min-[390px]:text-[11px]
-                        sm:text-[13px]
-                        font-black
-                        whitespace-nowrap
-                        leading-none
-                      "
-                    >
-                      {tab.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+              دخول البطولة
+            </button>
           </div>
-
-          <div className="mt-5">
-            {renderContent()}
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

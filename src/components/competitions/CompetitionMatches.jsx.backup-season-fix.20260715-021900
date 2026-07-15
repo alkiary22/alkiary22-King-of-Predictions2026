@@ -1,0 +1,339 @@
+import { useEffect, useMemo, useState } from "react";
+import api from "@/lib/api";
+import { CalendarDays, Radio, Clock3, CheckCircle2 } from "lucide-react";
+
+const LIVE_STATUS = new Set([
+  "1H", "2H", "HT", "ET", "P", "LIVE", "BT"
+]);
+
+const FINISHED_STATUS = new Set([
+  "FT", "AET", "PEN"
+]);
+
+function statusText(match) {
+  const short = match?.status?.short;
+
+  if (LIVE_STATUS.has(short)) {
+    const elapsed = match?.status?.elapsed;
+    return elapsed ? `مباشر ${elapsed}'` : "مباشر";
+  }
+
+  if (FINISHED_STATUS.has(short)) {
+    return "انتهت";
+  }
+
+  if (short === "PST") return "مؤجلة";
+  if (short === "CANC") return "ملغاة";
+  if (short === "SUSP") return "متوقفة";
+
+  return "لم تبدأ";
+}
+
+function matchType(match) {
+  const short = match?.status?.short;
+
+  if (LIVE_STATUS.has(short)) return "live";
+  if (FINISHED_STATUS.has(short)) return "finished";
+
+  return "upcoming";
+}
+
+function formatDate(value) {
+  if (!value) return "-";
+
+  return new Intl.DateTimeFormat("ar-SA", {
+    timeZone: "Asia/Riyadh",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+export default function CompetitionMatches({ competition }) {
+
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filter, setFilter] = useState("all");
+
+  const competitionId = competition?.apiLeagueId;
+  const competitionSeason = competition?.season;
+
+  useEffect(() => {
+
+    if (!competitionId) return;
+
+    let active = true;
+
+    async function load() {
+
+      setLoading(true);
+      setError("");
+
+      try {
+
+        const { data } = await api.get(
+          `/competitions/${competitionId}/matches?season=${competitionSeason}`
+        );
+
+        if (active) {
+          setMatches(Array.isArray(data) ? data : []);
+        }
+
+      } catch (e) {
+
+        console.error("Competition matches error:", e);
+
+        if (active) {
+          setError(
+            e?.response?.data?.detail ||
+            "تعذر تحميل مباريات البطولة"
+          );
+        }
+
+      } finally {
+
+        if (active) {
+          setLoading(false);
+        }
+
+      }
+
+    }
+
+    load();
+
+    return () => {
+      active = false;
+    };
+
+  }, [competitionId, competitionSeason]);
+
+  const counts = useMemo(() => {
+
+    const result = {
+      all: matches.length,
+      live: 0,
+      upcoming: 0,
+      finished: 0,
+    };
+
+    matches.forEach((match) => {
+      const type = matchType(match);
+      result[type] += 1;
+    });
+
+    return result;
+
+  }, [matches]);
+
+  const filteredMatches = useMemo(() => {
+
+    if (filter === "all") {
+      return matches;
+    }
+
+    return matches.filter(
+      (match) => matchType(match) === filter
+    );
+
+  }, [matches, filter]);
+
+  const filters = [
+    {
+      id: "all",
+      title: "الكل",
+      icon: CalendarDays,
+    },
+    {
+      id: "live",
+      title: "مباشر",
+      icon: Radio,
+    },
+    {
+      id: "upcoming",
+      title: "القادمة",
+      icon: Clock3,
+    },
+    {
+      id: "finished",
+      title: "المنتهية",
+      icon: CheckCircle2,
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="text-center py-12 text-zinc-400">
+        جاري تحميل المباريات...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-center text-red-300">
+        {error}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+
+      <div className="grid grid-cols-4 gap-2 mb-5">
+
+        {filters.map((item) => {
+
+          const Icon = item.icon;
+          const active = filter === item.id;
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => setFilter(item.id)}
+              className={`rounded-2xl border px-2 py-3 transition ${
+                active
+                  ? "bg-[#D4AF37] border-[#D4AF37] text-black"
+                  : "bg-[#161616] border-white/10 text-zinc-300"
+              }`}
+            >
+
+              <Icon
+                size={18}
+                className="mx-auto mb-1"
+              />
+
+              <div className="text-xs font-black">
+                {item.title}
+              </div>
+
+              <div className="text-[10px] mt-1 opacity-70">
+                {counts[item.id]}
+              </div>
+
+            </button>
+          );
+
+        })}
+
+      </div>
+
+      {filteredMatches.length === 0 ? (
+
+        <div className="text-center py-16 text-zinc-500">
+          لا توجد مباريات في هذا القسم
+        </div>
+
+      ) : (
+
+        <div className="space-y-4">
+
+          {filteredMatches.map((match) => {
+
+            const type = matchType(match);
+            const isLive = type === "live";
+            const isFinished = type === "finished";
+
+            return (
+              <div
+                key={match.fixture_id}
+                className={`rounded-3xl border bg-[#161616] p-5 transition ${
+                  isLive
+                    ? "border-red-500/50"
+                    : "border-white/10"
+                }`}
+              >
+
+                <div className="flex justify-between items-center gap-3 mb-5">
+
+                  <span className="text-[#D4AF37] text-xs font-bold">
+                    {match?.league?.round_ar ||
+                     match?.league?.round_en}
+                  </span>
+
+                  <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                    <CalendarDays size={15} />
+                    {formatDate(match.kickoff_utc)}
+                  </div>
+
+                </div>
+
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+
+                  <div className="text-center min-w-0">
+
+                    <img
+                      src={match?.teams?.home?.logo}
+                      alt=""
+                      className="w-14 h-14 mx-auto object-contain"
+                    />
+
+                    <div className="mt-3 font-bold text-sm">
+                      {match?.teams?.home?.name_ar ||
+                       match?.teams?.home?.name_en}
+                    </div>
+
+                  </div>
+
+                  <div className="text-center min-w-[72px]">
+
+                    {(isLive || isFinished) ? (
+
+                      <div className="text-3xl font-black text-[#D4AF37]">
+                        {match?.goals?.home ?? 0}
+                        <span className="mx-2 text-zinc-600">:</span>
+                        {match?.goals?.away ?? 0}
+                      </div>
+
+                    ) : (
+
+                      <div className="text-lg font-black text-white">
+                        VS
+                      </div>
+
+                    )}
+
+                    <div
+                      className={`text-xs mt-2 font-bold ${
+                        isLive
+                          ? "text-red-400"
+                          : "text-zinc-400"
+                      }`}
+                    >
+                      {statusText(match)}
+                    </div>
+
+                  </div>
+
+                  <div className="text-center min-w-0">
+
+                    <img
+                      src={match?.teams?.away?.logo}
+                      alt=""
+                      className="w-14 h-14 mx-auto object-contain"
+                    />
+
+                    <div className="mt-3 font-bold text-sm">
+                      {match?.teams?.away?.name_ar ||
+                       match?.teams?.away?.name_en}
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+            );
+
+          })}
+
+        </div>
+
+      )}
+
+    </div>
+  );
+}

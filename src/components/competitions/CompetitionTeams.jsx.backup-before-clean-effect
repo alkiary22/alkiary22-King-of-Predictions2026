@@ -1,0 +1,113 @@
+import { useEffect, useState } from "react";
+import api from "@/lib/api";
+
+export default function CompetitionTeams({ competition }) {
+
+  const [teams,setTeams]=useState([]);
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+
+    const competitionId =
+      competition?.id ||
+      competition?.apiLeagueId;
+
+    const competitionSeason =
+      competition?.effective_season ||
+      competition?.current_season ||
+      competition?.season ||
+      2026;
+
+    if(!competitionId) return;
+
+    let active=true;
+
+    async function load(){
+
+      try{
+
+        const {data}=await api.get(
+          `/competitions/${competitionId}/teams?season=${competitionSeason}`
+        );
+
+        if(active){
+          setTeams(data||[]);
+        }
+
+      }catch(e){
+
+        console.error(e);
+
+      }finally{
+
+        if(active){
+          setLoading(false);
+        }
+
+      }
+
+    }
+
+    load();
+
+    return()=>active=false;
+
+  },[competition]);
+
+  if(loading){
+
+    return(
+      <div className="py-12 text-center text-zinc-400">
+        جاري تحميل الفرق...
+      </div>
+    );
+
+  }
+
+  if(teams.length===0){
+
+    return(
+      <div className="py-12 text-center text-zinc-500">
+        لا توجد فرق
+      </div>
+    );
+
+  }
+
+  return(
+
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+
+      {teams.map(team=>(
+
+        <div
+          key={team.id}
+          className="rounded-3xl bg-[#181818] border border-white/10 hover:border-[#D4AF37]/40 transition p-5"
+        >
+
+          <img
+            src={team.logo}
+            className="w-16 h-16 mx-auto object-contain"
+          />
+
+          <h3 className="mt-4 text-center font-black">
+
+            {team.name_ar}
+
+          </h3>
+
+          <p className="text-center text-sm text-zinc-400 mt-1">
+
+            {team.country}
+
+          </p>
+
+        </div>
+
+      ))}
+
+    </div>
+
+  );
+
+}

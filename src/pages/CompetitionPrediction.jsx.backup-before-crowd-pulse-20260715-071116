@@ -1,0 +1,380 @@
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowRight,
+  Check,
+  CircleMinus,
+  Flame,
+  Shield,
+  Star,
+  Zap,
+} from "lucide-react";
+
+function TeamScore({ team, value, onChange }) {
+  function decrease() {
+    onChange(Math.max(0, Number(value) - 1));
+  }
+
+  function increase() {
+    onChange(Math.min(20, Number(value) + 1));
+  }
+
+  return (
+    <div className="flex flex-col items-center min-w-0">
+      <div className="h-[72px] flex items-center justify-center">
+        <img
+          src={team?.logo}
+          alt=""
+          className="w-[64px] h-[64px] object-contain"
+        />
+      </div>
+
+      <div className="mt-3 text-[17px] font-black text-white text-center line-clamp-2 min-h-[48px]">
+        {team?.name_ar || team?.name_en || "الفريق"}
+      </div>
+
+      <div className="mt-3 h-[62px] w-full max-w-[190px] rounded-[20px] border border-white/10 bg-[#0B1527] flex items-center overflow-hidden">
+        <button
+          type="button"
+          onClick={decrease}
+          className="w-[34%] h-full flex items-center justify-center text-zinc-500 text-[30px]"
+        >
+          −
+        </button>
+
+        <div className="w-[32%] h-full bg-white/[0.025] flex items-center justify-center text-[28px] font-black text-white">
+          {value}
+        </div>
+
+        <button
+          type="button"
+          onClick={increase}
+          className="w-[34%] h-full flex items-center justify-center text-zinc-500 text-[30px]"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function RewardCard({
+  active,
+  icon,
+  title,
+  points,
+  description,
+  onClick,
+  tone = "gold",
+}) {
+  const toneClass =
+    tone === "green"
+      ? "text-emerald-400"
+      : tone === "red"
+        ? "text-red-400"
+        : "text-[#F4C62F]";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`
+        min-w-0 rounded-[22px] border px-2 py-5 text-center
+        transition-all duration-300
+        ${
+          active
+            ? "border-[#D4AF37]/70 bg-[#D4AF37]/10 shadow-[0_0_25px_rgba(212,175,55,0.10)]"
+            : "border-white/10 bg-[#0C1729]"
+        }
+      `}
+    >
+      <div className="text-[31px] leading-none">{icon}</div>
+
+      <div className="mt-3 text-[17px] font-black text-white">
+        {title}
+      </div>
+
+      <div className={`mt-2 text-[14px] font-black ${toneClass}`}>
+        {points}
+      </div>
+
+      <div className="mt-2 text-[12px] text-zinc-500">
+        {description}
+      </div>
+    </button>
+  );
+}
+
+export default function CompetitionPrediction() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { fixtureId } = useParams();
+
+  const match = location.state?.match || null;
+  const competition = location.state?.competition || null;
+
+  const [homeScore, setHomeScore] = useState(0);
+  const [awayScore, setAwayScore] = useState(0);
+  const [level, setLevel] = useState("safe");
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const winner = useMemo(() => {
+    if (homeScore > awayScore) {
+      return "home";
+    }
+
+    if (awayScore > homeScore) {
+      return "away";
+    }
+
+    return "draw";
+  }, [homeScore, awayScore]);
+
+  if (!match) {
+    return (
+      <div
+        dir="rtl"
+        className="min-h-screen bg-[#020B1B] text-white px-5 py-8"
+      >
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="w-14 h-14 rounded-[20px] border border-white/10 bg-[#0C1729] flex items-center justify-center"
+        >
+          <ArrowRight size={30} />
+        </button>
+
+        <div className="mt-20 text-center">
+          <div className="text-xl font-black">
+            تعذر فتح المباراة
+          </div>
+
+          <div className="mt-3 text-zinc-500">
+            ارجع إلى البطولة واختر المباراة من جديد
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const home = match?.teams?.home;
+  const away = match?.teams?.away;
+
+  return (
+    <div
+      dir="rtl"
+      className="min-h-screen bg-[#020B1B] text-white pb-32"
+    >
+      <div className="px-5 pt-6">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-[62px] h-[62px] rounded-[22px] border border-white/10 bg-[#0C1729] flex items-center justify-center"
+          >
+            <ArrowRight size={34} />
+          </button>
+
+          <div className="text-[20px] font-black text-zinc-400">
+            {competition?.name_ar ||
+              competition?.title ||
+              "البطولة الكبرى"}
+          </div>
+
+          <div className="w-[62px]" />
+        </div>
+
+        <div className="mt-10 rounded-[32px] border border-emerald-500/20 bg-gradient-to-b from-emerald-500/[0.06] to-transparent px-4 py-8">
+          <div className="flex items-center justify-center gap-5">
+            <div className="h-px flex-1 bg-emerald-500/20" />
+
+            <div className="rounded-full border border-emerald-500/40 bg-emerald-500/[0.08] px-7 py-4 flex items-center gap-3">
+              <span className="text-[27px] font-black text-emerald-400">
+                ابدأ توقعك
+              </span>
+
+              <span className="text-[28px]">⚽</span>
+            </div>
+
+            <div className="h-px flex-1 bg-emerald-500/20" />
+          </div>
+
+          <div className="mt-10 flex items-center justify-end gap-3">
+            <div className="w-9 h-9 rounded-full border border-emerald-500/40 bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-black">
+              1
+            </div>
+
+            <div className="text-[22px] font-black">
+              النتيجة الدقيقة
+            </div>
+          </div>
+
+          <div className="mt-8 grid grid-cols-[1fr_30px_1fr] items-center gap-3">
+            <TeamScore
+              team={home}
+              value={homeScore}
+              onChange={setHomeScore}
+            />
+
+            <div className="text-center text-zinc-600 text-[28px] font-black">
+              -
+            </div>
+
+            <TeamScore
+              team={away}
+              value={awayScore}
+              onChange={setAwayScore}
+            />
+          </div>
+
+          <div className="mt-7 rounded-[20px] border border-[#D4AF37]/40 bg-[#D4AF37]/[0.08] px-5 py-5 flex items-center justify-between">
+            <div className="w-10 h-10 rounded-full bg-[#F4C62F] text-black flex items-center justify-center">
+              <Check size={22} strokeWidth={3} />
+            </div>
+
+            <div className="text-right">
+              <div className="text-zinc-500 text-[14px]">
+                الفائز
+              </div>
+
+              <div className="mt-1 text-[#F4C62F] text-[20px] font-black">
+                {winner === "home"
+                  ? home?.name_ar || home?.name_en
+                  : winner === "away"
+                    ? away?.name_ar || away?.name_en
+                    : "تعادل"}
+              </div>
+            </div>
+
+            <div className="w-10 h-10 rounded-full bg-[#F4C62F] text-black flex items-center justify-center">
+              <CircleMinus size={24} />
+            </div>
+          </div>
+
+          <div className="mt-12 flex items-center justify-end gap-3">
+            <div className="w-9 h-9 rounded-full border border-emerald-500/40 bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-black">
+              2
+            </div>
+
+            <div className="text-[22px] font-black">
+              مستويات الجوائز
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            <RewardCard
+              active={level === "crazy"}
+              icon="🔥"
+              title="مجنون"
+              points="400 نق"
+              description="النتيجة بالضبط"
+              tone="red"
+              onClick={() => setLevel("crazy")}
+            />
+
+            <RewardCard
+              active={level === "bold"}
+              icon="⚡"
+              title="جريء"
+              points="200 نق"
+              description="نتيجة الفائز"
+              onClick={() => setLevel("bold")}
+            />
+
+            <RewardCard
+              active={level === "safe"}
+              icon="🛡️"
+              title="آمن"
+              points="100 نق"
+              description="الفائز فقط"
+              tone="green"
+              onClick={() => setLevel("safe")}
+            />
+          </div>
+
+          <div className="mt-12 flex items-center justify-end gap-3">
+            <div className="w-9 h-9 rounded-full border border-emerald-500/40 bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-black">
+              3
+            </div>
+
+            <div className="text-[22px] font-black">
+              اكسب نقاط أكثر
+            </div>
+          </div>
+
+          <div className="mt-5 flex items-center justify-end gap-2 text-zinc-500">
+            <span>اختياري — اكسب نقاط إضافية!</span>
+            <Star
+              size={24}
+              className="text-[#F4C62F]"
+              fill="currentColor"
+            />
+          </div>
+
+          <div className="mt-6 rounded-[22px] border border-white/10 bg-[#0C1729] p-5">
+            <div className="flex items-center justify-between">
+              <div className="rounded-lg bg-[#D4AF37]/10 px-3 py-1 text-[#F4C62F] text-sm font-black">
+                +30 نق
+              </div>
+
+              <div className="text-[18px] font-black">
+                من يفتح التسجيل؟
+              </div>
+
+              <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
+                ⚽
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <button className="h-12 rounded-xl border border-white/10 bg-black/10 text-zinc-400 font-bold">
+                بدون أهداف
+              </button>
+
+              <button className="h-12 rounded-xl border border-white/10 bg-black/10 text-zinc-400 font-bold truncate px-2">
+                {away?.name_ar || away?.name_en}
+              </button>
+
+              <button className="h-12 rounded-xl border border-white/10 bg-black/10 text-zinc-400 font-bold truncate px-2">
+                {home?.name_ar || home?.name_en}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[22px] border border-white/10 bg-[#0C1729] p-5">
+            <div className="flex items-center justify-between">
+              <div className="rounded-lg bg-red-500/10 px-3 py-1 text-red-400 text-sm font-black">
+                +25 نق
+              </div>
+
+              <div className="text-[18px] font-black">
+                هل ستكون هناك بطاقات حمراء؟
+              </div>
+
+              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                🟥
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button className="h-12 rounded-xl border border-white/10 bg-black/10 text-zinc-400 font-black">
+                لا
+              </button>
+
+              <button className="h-12 rounded-xl border border-white/10 bg-black/10 text-zinc-400 font-black">
+                نعم
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center text-xs text-zinc-600">
+            رقم المباراة: {fixtureId}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

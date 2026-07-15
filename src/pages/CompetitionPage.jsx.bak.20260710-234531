@@ -1,0 +1,126 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import api from "@/lib/api";
+import CompetitionTabs from "@/components/competitions/CompetitionTabs";
+import CompetitionMatches from "@/components/competitions/CompetitionMatches";
+
+export default function CompetitionPage() {
+
+  const { id } = useParams();
+
+  const [competition,setCompetition]=useState(null);
+  const [tab,setTab]=useState("matches");
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+
+    let active=true;
+
+    async function load(){
+
+      try{
+
+        const {data}=await api.get("/competitions");
+
+        const item=data.find(c=>String(c.id)===String(id));
+
+        if(active) setCompetition(item);
+
+      }finally{
+
+        if(active) setLoading(false);
+
+      }
+
+    }
+
+    load();
+
+    return()=>active=false;
+
+  },[id]);
+
+  if(loading){
+
+    return(
+      <div className="min-h-screen bg-base flex items-center justify-center text-white">
+        جاري التحميل...
+      </div>
+    );
+
+  }
+
+  if(!competition){
+
+    return(
+      <div className="min-h-screen bg-base flex items-center justify-center text-white">
+        البطولة غير موجودة
+      </div>
+    );
+
+  }
+
+  return(
+
+    <div className="min-h-screen bg-base text-white">
+
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background:"linear-gradient(135deg,#D4AF37,#101010)"
+        }}
+      >
+
+        <div className="absolute inset-0 bg-black/35"/>
+
+        <div className="relative px-6 pt-10 pb-8 flex flex-col items-center">
+
+          <div className="bg-white rounded-3xl p-4">
+
+            <img
+              src={competition.logo}
+              className="w-24 h-24 object-contain"
+            />
+
+          </div>
+
+          <h1 className="text-3xl font-black mt-5">
+
+            {competition.name_ar || competition.name_en}
+
+          </h1>
+
+          <p className="text-white/70 mt-2">
+
+            {competition.country}
+
+          </p>
+
+        </div>
+
+      </div>
+
+      <div className="px-4 py-5">
+
+        <CompetitionTabs
+          active={tab}
+          onChange={setTab}
+        />
+
+      </div>
+
+      <div className="px-4 pb-8">
+
+        {tab==="matches" && (
+          <CompetitionMatches
+            competition={{id:competition.id}}
+          />
+        )}
+
+      </div>
+
+    </div>
+
+  );
+
+}

@@ -340,7 +340,7 @@ export default function CompetitionGrid() {
               className="
                 grid
                 grid-cols-4
-                gap-1.5
+                gap-2.5
               "
             >
               {TABS.map((tab) => {
@@ -364,8 +364,8 @@ export default function CompetitionGrid() {
                       flex
                       items-center
                       justify-center
-                      gap-1
-                      px-1
+                      gap-1.5
+                      px-2
                       transition-all
                       duration-300
 
@@ -388,19 +388,17 @@ export default function CompetitionGrid() {
                     `}
                   >
                     <Icon
-                      size={18}
+                      size={20}
                       strokeWidth={2.5}
                       className="shrink-0"
                     />
 
                     <span
                       className="
-                        text-[10px]
-                        min-[390px]:text-[11px]
-                        sm:text-[13px]
+                        text-[12px]
+                        sm:text-[14px]
                         font-black
                         whitespace-nowrap
-                        leading-none
                       "
                     >
                       {tab.label}

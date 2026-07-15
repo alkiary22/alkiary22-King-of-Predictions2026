@@ -1,0 +1,80 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - feature/api-football-leagues
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/api-football-leagues
+          fetch-depth: 0
+
+      - name: Show exact commit
+        run: |
+          echo "===== BUILDING BRANCH ====="
+          git branch --show-current
+
+          echo "===== BUILDING COMMIT ====="
+          git rev-parse HEAD
+          git log -1 --oneline
+
+          echo "===== VERIFY COMPETITION CODE ====="
+          grep -n -A18 -B3 'seasonLabel:' src/components/competitions/CompetitionGrid.jsx || true
+          grep -n -A8 -B3 'competitionSeason' src/components/competitions/CompetitionStandings.jsx || true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build web assets
+        run: |
+          CI=false npm run build
+
+          echo "===== BUILD CONTENT CHECK ====="
+          grep -R -l '2025/2026' build/static/js/*.js | head || true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install Capacitor Android
+        run: npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps
+
+      - name: Sync Android
+        run: npx cap sync android
+
+      - name: Build APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew clean assembleDebug
+
+      - name: Prepare APK
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
+          "King-Predictions-${SHORT_SHA}.apk"
+
+          echo "APK_NAME=King-Predictions-${SHORT_SHA}" >> "$GITHUB_ENV"
+
+          echo "===== FINAL APK ====="
+          ls -lh "King-Predictions-${SHORT_SHA}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK_NAME }}
+          path: King-Predictions-*.apk
+          if-no-files-found: error

@@ -1,0 +1,158 @@
+import { useEffect, useState } from "react";
+import api from "@/lib/api";
+
+export default function CompetitionStandings({ competition }) {
+
+  const [rows,setRows]=useState([]);
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+
+    if(!competition?.id) return;
+
+    let active=true;
+
+    async function load(){
+
+      try{
+
+        const {data}=await api.get(
+          `/competitions/${competition.id}/standings`
+        );
+
+        if(active) setRows(data||[]);
+
+      }catch(e){
+
+        console.error(e);
+
+      }finally{
+
+        if(active) setLoading(false);
+
+      }
+
+    }
+
+    load();
+
+    return()=>active=false;
+
+  },[competition]);
+
+  if(loading){
+
+    return(
+      <div className="py-10 text-center text-zinc-400">
+        جاري تحميل جدول الترتيب...
+      </div>
+    );
+
+  }
+
+  return(
+
+    <div className="overflow-x-auto rounded-3xl border border-white/10 bg-[#151515]">
+
+      <table className="w-full text-sm">
+
+        <thead className="bg-[#202020] text-[#D4AF37]">
+
+          <tr>
+
+            <th className="p-3">#</th>
+            <th className="p-3 text-right">الفريق</th>
+            <th className="p-3">لعب</th>
+            <th className="p-3">ف</th>
+            <th className="p-3">ت</th>
+            <th className="p-3">خ</th>
+            <th className="p-3">+/-</th>
+            <th className="p-3">ن</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          {rows.map(team=>(
+
+            <tr
+              key={team.team.id}
+              className="border-t border-white/5 hover:bg-white/5 transition"
+            >
+
+              <td className="p-3 text-center font-bold">
+
+                {team.rank}
+
+              </td>
+
+              <td className="p-3">
+
+                <div className="flex items-center gap-3">
+
+                  <img
+                    src={team.team.logo}
+                    className="w-8 h-8 object-contain"
+                  />
+
+                  <span>
+
+                    {team.team.name_ar}
+
+                  </span>
+
+                </div>
+
+              </td>
+
+              <td className="text-center">
+
+                {team.played}
+
+              </td>
+
+              <td className="text-center">
+
+                {team.win}
+
+              </td>
+
+              <td className="text-center">
+
+                {team.draw}
+
+              </td>
+
+              <td className="text-center">
+
+                {team.lose}
+
+              </td>
+
+              <td className="text-center">
+
+                {team.gd}
+
+              </td>
+
+              <td className="text-center font-black text-[#D4AF37]">
+
+                {team.points}
+
+              </td>
+
+            </tr>
+
+          ))}
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  );
+
+}

@@ -1,0 +1,91 @@
+import { useEffect, useState } from "react";
+import api from "@/lib/api";
+import CompetitionCard from "./CompetitionCard";
+
+export default function CompetitionGrid() {
+
+  const [competitions, setCompetitions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+
+    let mounted = true;
+
+    async function load() {
+
+      try {
+
+        const { data } = await api.get("/competitions");
+
+        if (mounted) {
+
+          const list = (data || []).map(item => ({
+
+            id: String(item.id),
+
+            title: item.name_ar || item.name_en,
+
+            season: item.current_season,
+
+            image: item.logo,
+
+            color: "#D4AF37",
+
+            country: item.country,
+
+            type: item.type,
+
+          }));
+
+          setCompetitions(list);
+
+        }
+
+      } catch (e) {
+
+        console.error("Failed to load competitions", e);
+
+      } finally {
+
+        if (mounted) setLoading(false);
+
+      }
+
+    }
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+
+  }, []);
+
+  if (loading) {
+
+    return (
+      <div className="py-16 text-center text-zinc-400">
+        جاري تحميل البطولات...
+      </div>
+    );
+
+  }
+
+  return (
+
+    <div className="grid gap-5">
+
+      {competitions.map((competition) => (
+
+        <CompetitionCard
+          key={competition.id}
+          competition={competition}
+        />
+
+      ))}
+
+    </div>
+
+  );
+
+}
