@@ -7,7 +7,15 @@ export default function CompetitionScorers({ competition }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const competitionId = competition?.id;
+  const competitionId =
+    competition?.id ||
+    competition?.apiLeagueId;
+
+  const competitionSeason =
+    competition?.effective_season ||
+    competition?.current_season ||
+    competition?.season ||
+    2026;
 
   useEffect(() => {
 
@@ -23,7 +31,7 @@ export default function CompetitionScorers({ competition }) {
       try {
 
         const { data } = await api.get(
-          `/competitions/${competitionId}/scorers`
+          `/competitions/${competitionId}/scorers?season=${competitionSeason}`
         );
 
         if (active) {
@@ -59,7 +67,7 @@ export default function CompetitionScorers({ competition }) {
       active = false;
     };
 
-  }, [competitionId]);
+  }, [competitionId, competitionSeason]);
 
   if (loading) {
     return (

@@ -36,8 +36,36 @@ export default function CompetitionPage() {
             item
               ? {
                   ...item,
-                  current_season: 2026,
-                  effective_season: 2026,
+                  current_season:
+                    Number(item.id) === 2
+                      ? 2025
+                      : [1, 39, 140, 135, 78, 61].includes(Number(item.id))
+                        ? 2026
+                        : (
+                            item.effective_season ||
+                            item.current_season
+                          ),
+                  effective_season:
+                    Number(item.id) === 2
+                      ? 2025
+                      : [1, 39, 140, 135, 78, 61].includes(Number(item.id))
+                        ? 2026
+                        : (
+                            item.effective_season ||
+                            item.current_season
+                          ),
+                  season_label:
+                    Number(item.id) === 2
+                      ? "2025/2026"
+                      : String(
+                          [1, 39, 140, 135, 78, 61].includes(Number(item.id))
+                            ? 2026
+                            : (
+                                item.effective_season ||
+                                item.current_season ||
+                                ""
+                              )
+                        ),
                 }
               : null
           );

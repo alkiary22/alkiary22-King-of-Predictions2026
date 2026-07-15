@@ -62,7 +62,7 @@ export default function CompetitionHeader({ competition }) {
               <CalendarDays size={16} />
 
               <span>
-                موسم {competition.current_season}
+                موسم {competition.season_label || competition.current_season}
               </span>
 
             </div>

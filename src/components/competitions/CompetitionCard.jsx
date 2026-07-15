@@ -53,7 +53,7 @@ export default function CompetitionCard({ competition }) {
 
                 <CalendarDays size={16}/>
 
-                موسم {competition.season}
+                موسم {competition.seasonLabel || competition.season}
 
               </div>
 

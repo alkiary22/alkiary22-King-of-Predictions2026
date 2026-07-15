@@ -19,7 +19,27 @@ export default function CompetitionGrid() {
         const list = (data || []).map(item => ({
           id: String(item.id),
           title: item.name_ar || item.name_en,
-          season: item.current_season,
+          season:
+            Number(item.id) === 2
+              ? 2025
+              : [1, 39, 140, 135, 78, 61].includes(Number(item.id))
+                ? 2026
+                : (
+                    item.effective_season ||
+                    item.current_season
+                  ),
+          seasonLabel:
+            Number(item.id) === 2
+              ? "2025/2026"
+              : String(
+                  [1, 39, 140, 135, 78, 61].includes(Number(item.id))
+                    ? 2026
+                    : (
+                        item.effective_season ||
+                        item.current_season ||
+                        ""
+                      )
+                ),
           image: item.logo,
           color: "#D4AF37",
           country: item.country,

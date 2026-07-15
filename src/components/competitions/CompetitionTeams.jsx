@@ -3,34 +3,60 @@ import api from "@/lib/api";
 
 export default function CompetitionTeams({ competition }) {
 
-  const [teams,setTeams]=useState([]);
-  const [loading,setLoading]=useState(true);
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  useEffect(()=>{
+  const competitionId =
+    competition?.id ||
+    competition?.apiLeagueId;
 
-    if(!competition?.id) return;
+  const competitionSeason =
+    competition?.effective_season ||
+    competition?.current_season ||
+    competition?.season ||
+    2026;
 
-    let active=true;
+  useEffect(() => {
 
-    async function load(){
+    if (!competitionId) return;
 
-      try{
+    let active = true;
 
-        const {data}=await api.get(
-          `/competitions/${competition.id}/teams`
+    async function load() {
+
+      setLoading(true);
+      setError("");
+
+      try {
+
+        const { data } = await api.get(
+          `/competitions/${competitionId}/teams?season=${competitionSeason}`
         );
 
-        if(active){
-          setTeams(data||[]);
+        if (active) {
+          setTeams(
+            Array.isArray(data) ? data : []
+          );
         }
 
-      }catch(e){
+      } catch (e) {
 
-        console.error(e);
+        console.error(
+          "Competition teams error:",
+          e
+        );
 
-      }finally{
+        if (active) {
+          setError(
+            e?.response?.data?.detail ||
+            "تعذر تحميل فرق البطولة"
+          );
+        }
 
-        if(active){
+      } finally {
+
+        if (active) {
           setLoading(false);
         }
 
@@ -40,13 +66,15 @@ export default function CompetitionTeams({ competition }) {
 
     load();
 
-    return()=>active=false;
+    return () => {
+      active = false;
+    };
 
-  },[competition]);
+  }, [competitionId, competitionSeason]);
 
-  if(loading){
+  if (loading) {
 
-    return(
+    return (
       <div className="py-12 text-center text-zinc-400">
         جاري تحميل الفرق...
       </div>
@@ -54,9 +82,19 @@ export default function CompetitionTeams({ competition }) {
 
   }
 
-  if(teams.length===0){
+  if (error) {
 
-    return(
+    return (
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-center text-red-300">
+        {error}
+      </div>
+    );
+
+  }
+
+  if (teams.length === 0) {
+
+    return (
       <div className="py-12 text-center text-zinc-500">
         لا توجد فرق
       </div>
@@ -64,11 +102,11 @@ export default function CompetitionTeams({ competition }) {
 
   }
 
-  return(
+  return (
 
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 
-      {teams.map(team=>(
+      {teams.map((team) => (
 
         <div
           key={team.id}
@@ -77,18 +115,23 @@ export default function CompetitionTeams({ competition }) {
 
           <img
             src={team.logo}
+            alt={team.name_ar || team.name_en || ""}
             className="w-16 h-16 mx-auto object-contain"
           />
 
           <h3 className="mt-4 text-center font-black">
 
-            {team.name_ar}
+            {team.name_ar ||
+             team.name_en ||
+             "فريق"}
 
           </h3>
 
           <p className="text-center text-sm text-zinc-400 mt-1">
 
-            {team.country}
+            {team.country_ar ||
+             team.country ||
+             ""}
 
           </p>
 
