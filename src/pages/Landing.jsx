@@ -33,6 +33,9 @@ export default function Landing() {
   const { t } = useContent();
   const [cd, setCd] = useState(getCountdown());
 const [stats, setStats] = useState(null);
+  const [marquee, setMarquee] = useState(
+    "🏆 الرعاة الرسميون لجائزة ملك التوقعات"
+  );
 
   const points = Number(user?.total_points ?? 0);
 
@@ -50,6 +53,12 @@ const level =
       points >= 100 ? "🥇 ذهبي" :
       points >= 50 ? "🥈 فضي" :
       "🥉 برونزي";
+
+  useEffect(() => {
+    api.get("/marquee")
+      .then((r) => setMarquee(r.data?.text || ""))
+      .catch((e) => console.error("Failed to load marquee", e));
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => setCd(getCountdown()), 30000);
@@ -91,6 +100,14 @@ const level =
           <div className="max-w-4xl mx-auto text-center">
             <PushEnableBanner />
             <AdSlider />
+
+            {marquee && (
+              <div className="home-marquee-bar">
+                <div className="home-marquee-track">
+                  {marquee}
+                </div>
+              </div>
+            )}
 
             {/* Crown badge */}
             <div className="inline-flex items-center justify-center w-12 h-12 md:w-20 md:h-20 rounded-full bg-gold shadow-[0_0_35px_rgba(255,215,0,0.35)] mb-1 md:mb-2 animate-fade-in-up">

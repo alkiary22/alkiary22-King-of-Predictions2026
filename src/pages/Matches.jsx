@@ -9,7 +9,7 @@ import { useContent } from "../context/ContentContext";
 import { Link } from "react-router-dom";
 import { Calendar, Lock, Trophy, Loader2, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
-import CompetitionTabs from "../components/competitions/CompetitionTabs";
+
 
 const TEAM_MAP_CACHE = {};
 
@@ -54,22 +54,29 @@ export default function Matches() {
   const [predictions, setPredictions] = useState({});
   const [loading, setLoading] = useState(true);
   const [competition, setCompetition] = useState("all");
+  const [competitions, setCompetitions] = useState([]);
   const [selectedDate, setSelectedDate] = useState("ALL");
 
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [teamsRes, matchesRes, predsRes] = await Promise.all([
+      const [teamsRes, matchesRes, predsRes, competitionsRes] = await Promise.all([
         Object.keys(TEAM_MAP_CACHE).length
           ? Promise.resolve({ data: Object.values(TEAM_MAP_CACHE) })
           : api.get("/teams"),
         api.get("/matches"),
         user ? api.get("/predictions/me") : Promise.resolve({ data: [] }),
+        api.get("/competitions").catch(() => ({ data: [] })),
       ]);
       const tm = {};
       teamsRes.data.forEach((t) => (tm[t.code] = t));
       Object.assign(TEAM_MAP_CACHE, tm);
       setTeamsMap(tm);
+      setCompetitions(
+        Array.isArray(competitionsRes.data)
+          ? competitionsRes.data
+          : []
+      );
       setMatches(matchesRes.data.sort((a,b)=>{
         const order={
           "دور الـ32":0,
@@ -105,24 +112,71 @@ useEffect(() => {
     loadAll();
   }, [loadAll]);
 
-  const groupedByDate = useMemo(() => {
-    const compMatches = competition === "all"
-      ? matches
-      : matches.filter((m) => (m.competition || "worldcup") === competition);
-    const filtered = selectedDate === "ALL"
-      ? compMatches
-      : compMatches.filter((m) => m.match_date === selectedDate);
-    const g = {};
-    filtered.forEach((m) => {
-      g[m.match_date] = g[m.match_date] || [];
-      g[m.match_date].push(m);
+  const filteredMatches = useMemo(() => {
+    let list = matches;
+
+    if (competition !== "all") {
+      if (competition === "worldcup") {
+        list = list.filter((m) =>
+          (m.competition || "worldcup") === "worldcup" ||
+          Number(m.league_id) === 1
+        );
+      } else {
+        list = list.filter(
+          (m) => Number(m.league_id) === Number(competition)
+        );
+      }
+    }
+
+    if (selectedDate !== "ALL") {
+      list = list.filter(
+        (m) => m.match_date === selectedDate
+      );
+    }
+
+    return list;
+  }, [matches, competition, selectedDate]);
+
+  const groupedStages = useMemo(() => {
+    const groups = new Map();
+
+    filteredMatches.forEach((match) => {
+      const stage =
+        match.round_ar ||
+        match.stage ||
+        match.round_en ||
+        "المباريات";
+
+      if (!groups.has(stage)) {
+        groups.set(stage, []);
+      }
+
+      groups.get(stage).push(match);
     });
-    return Object.entries(g).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [matches, selectedDate]);
+
+    return Array.from(groups.entries());
+  }, [filteredMatches]);
 
   const availableDates = useMemo(() => {
-    return Array.from(new Set(matches.map((m) => m.match_date))).sort();
-  }, [matches]);
+    let list = matches;
+
+    if (competition !== "all") {
+      if (competition === "worldcup") {
+        list = list.filter((m) =>
+          (m.competition || "worldcup") === "worldcup" ||
+          Number(m.league_id) === 1
+        );
+      } else {
+        list = list.filter(
+          (m) => Number(m.league_id) === Number(competition)
+        );
+      }
+    }
+
+    return Array.from(
+      new Set(list.map((m) => m.match_date).filter(Boolean))
+    ).sort();
+  }, [matches, competition]);
 
   const handlePredictionSaved = (pred) => {
     setPredictions((prev) => ({ ...prev, [pred.match_id]: pred }));
@@ -130,61 +184,136 @@ useEffect(() => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" data-testid="matches-page">
-      <AdSlider />
-
-      <div className="mb-8">
-        <CompetitionTabs
-          onChange={setCompetition}
-        />
+    <div className="matches-apk-page max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" data-testid="matches-page">
+      <div className="king-matches-adslider">
+        <div className="matches-ad-slider-position">
+        <AdSlider />
+      </div>
       </div>
 
-      <div className="sticky top-16 z-40 mb-6 border border-gold/20 bg-black/95 backdrop-blur rounded-2xl overflow-hidden shadow-[0_0_25px_rgba(255,215,0,0.15)]">
-        <div className="relative h-12 flex items-center overflow-hidden">
-          <div className="whitespace-nowrap text-gold font-black text-sm sm:text-base" style={{ animation: "matchesMarquee 18s linear infinite" }}>
+      <div className="king-matches-competitions mb-6">
+        <div
+          dir="rtl"
+          className="flex gap-2 overflow-x-auto pb-2"
+          style={{ scrollbarWidth: "none" }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setCompetition("all");
+              setSelectedDate("ALL");
+            }}
+            className={`shrink-0 px-5 py-3 rounded-2xl font-black text-sm border transition-all ${
+              competition === "all"
+                ? "bg-gold text-black border-gold"
+                : "bg-[#191919] text-white border-white/10"
+            }`}
+          >
+            الكل
+          </button>
+
+          {competitions.map((item) => {
+            const value =
+              Number(item.id) === 1
+                ? "worldcup"
+                : String(item.id);
+
+            const active =
+              String(competition) === String(value);
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setCompetition(value);
+                  setSelectedDate("ALL");
+                }}
+                className={`shrink-0 min-w-[120px] px-4 py-3 rounded-2xl border transition-all ${
+                  active
+                    ? "bg-gold text-black border-gold"
+                    : "bg-[#191919] text-white border-white/10"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  {item.logo && (
+                    <img
+                      src={item.logo}
+                      alt=""
+                      className="w-7 h-7 object-contain"
+                    />
+                  )}
+
+                  <span className="font-black text-xs whitespace-nowrap">
+                    {item.name_ar || item.name_en}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="matches-apk-marquee">
+        <div className="matches-apk-marquee-inner">
+          <div
+            className="matches-apk-marquee-track"
+            style={{ animation: "matchesMarquee 18s linear infinite" }}
+          >
             {marquee}
           </div>
         </div>
+
         <style>
           {"@keyframes matchesMarquee { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }"}
         </style>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
-        <div>
-          <p className="text-xs font-bold text-gold uppercase tracking-[0.2em] mb-2">{t("matches_pretitle")}</p>
-          <h1 className="font-display text-4xl sm:text-5xl font-black mb-3">
+      <section className="king-matches-hero">
+        <div className="king-matches-copy">
+          <p className="king-matches-kicker">
+            {t("matches_pretitle")}
+          </p>
+
+          <h1 className="king-matches-title">
             {t("matches_title")}
           </h1>
-          <p className="text-zinc-400 text-base">
+
+          <p className="king-matches-description">
             {t("matches_desc")}
           </p>
         </div>
+
         {user && (
-          <div className="glass-card rounded-xl px-6 py-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-gold/15 flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-gold" />
-            </div>
-            <div>
-              <p className="text-xs text-zinc-400">رصيد نقاطك</p>
-              <p className="font-display text-3xl font-black text-gold" data-testid="matches-points-balance">
+          <div className="king-matches-points">
+            <Trophy className="king-matches-points-icon" />
+
+            <div className="king-matches-points-data">
+              <span className="king-matches-points-label">
+                رصيد نقاطك
+              </span>
+
+              <strong
+                className="king-matches-points-value"
+                data-testid="matches-points-balance"
+              >
                 {user.total_points}
-              </p>
+              </strong>
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       {availableDates.length > 0 && (
-        <div className="mb-8" data-testid="date-filters">
-          <label className="block text-xs font-bold text-zinc-400 mb-2">
+        <div className="matches-apk-date-filter" data-testid="date-filters">
+          <label className="matches-apk-date-label">
             اختر تاريخ المباريات
           </label>
 
           <select
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full bg-black/50 border border-white/10 rounded-2xl px-4 py-4 text-white font-bold outline-none focus:border-gold"
+            className="matches-apk-date-select"
           >
             <option value="ALL">كل التواريخ</option>
             {availableDates.map((d) => (
@@ -197,12 +326,12 @@ useEffect(() => {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="matches-apk-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="skeleton h-56 rounded-xl" />
           ))}
         </div>
-      ) : matches.length === 0 ? (
+      ) : filteredMatches.length === 0 ? (
         <div className="glass-card rounded-2xl p-16 text-center">
           <Calendar className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
           <h3 className="font-display text-2xl font-bold mb-2">لا توجد مباريات بعد</h3>
@@ -219,21 +348,13 @@ useEffect(() => {
           )}
         </div>
       ) : (
-        <div className="space-y-12">
-          {[
-            "دور الـ32",
-            "دور الـ16",
-            "ربع النهائي",
-            "نصف النهائي",
-            "النهائي",
-            "مرحلة المجموعات"
-          ].map(stage => {
-            const list = matches.filter(m => m.stage === stage);
+        <div className="matches-apk-stages space-y-12">
+          {groupedStages.map(([stage, list]) => {
             if (!list.length) return null;
 
             return (
-              <section key={stage}>
-                <div className="flex items-center gap-3 mb-5">
+              <section key={stage} className="matches-apk-stage">
+                <div className="matches-apk-stage-title">
                   <Trophy className="w-5 h-5 text-gold" />
                   <h2 className="font-display text-xl font-bold">{stage}</h2>
                   <span className="text-sm text-zinc-500 font-medium">({list.length} مباراة)</span>
@@ -323,7 +444,7 @@ function MatchCard({ match, teamsMap, prediction, canPredict, onSaved }) {
   return (
     <div
       data-testid={`match-card-${match.id}`}
-      className="glass-card rounded-2xl p-6 flex flex-col gap-5 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(255,215,0,0.06)] transition-all"
+      className="matches-apk-card glass-card rounded-2xl p-6 flex flex-col gap-5 transition-all"
     >
       <div className="flex items-center justify-between text-xs">
         <span className="px-2 py-1 rounded-md bg-white/5 text-zinc-400 font-medium">
