@@ -42,11 +42,11 @@ export default function AdSlider() {
 
   return (
     <div className="w-full max-w-[690px] mx-auto mb-4 animate-fade-in-up">
-      <div className="relative overflow-hidden rounded-[30px] bg-white shadow-2xl border border-white/10">
+      <div className="relative w-full aspect-[16/5] overflow-hidden rounded-[30px] bg-[#111] shadow-2xl border border-white/10">
         <img
           src={ad.image}
           alt={ad.title}
-          className="w-full h-auto block object-contain"
+          className="absolute inset-0 w-full h-full block object-cover object-center"
         />
 
         <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
