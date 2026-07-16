@@ -6,7 +6,7 @@ import { Crown, Mail, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const nav = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,6 +20,24 @@ export default function Login() {
     try {
       await login(email, password);
       toast.success("أهلاً بعودتك!");
+      nav("/matches");
+    } catch (e) {
+      const msg = apiErrorMessage(e);
+      setErr(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const submitGoogle = async () => {
+    setErr("");
+    setLoading(true);
+
+    try {
+      await loginWithGoogle();
+      toast.success("تم تسجيل الدخول بواسطة Google");
       nav("/matches");
     } catch (e) {
       const msg = apiErrorMessage(e);
@@ -84,6 +102,23 @@ export default function Login() {
                 {err}
               </p>
             )}
+
+            <button
+              type="button"
+              onClick={submitGoogle}
+              disabled={loading}
+              className="w-full py-3 rounded-lg border border-zinc-600 bg-white text-black font-bold hover:bg-zinc-100 transition mb-3"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <img
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  alt="Google"
+                  className="w-5 h-5"
+                />
+                المتابعة بواسطة Google
+              </span>
+            </button>
+
             <button
               type="submit"
               disabled={loading}

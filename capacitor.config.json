@@ -1,5 +1,12 @@
 {
   "appId": "com.king.predictions",
   "appName": "ملك التوقعات",
-  "webDir": "build"
+  "webDir": "build",
+  "plugins": {
+    "FirebaseAuthentication": {
+      "providers": [
+        "google.com"
+      ]
+    }
+  }
 }

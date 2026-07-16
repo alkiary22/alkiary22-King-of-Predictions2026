@@ -1,5 +1,9 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import api, { apiErrorMessage } from "../lib/api";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
+import { Capacitor } from "@capacitor/core";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../firebase";
 
 const AuthContext = createContext(null);
 
@@ -44,6 +48,35 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
+  const loginWithGoogle = async () => {
+    let idToken = null;
+
+    if (Capacitor.isNativePlatform()) {
+      const result = await FirebaseAuthentication.signInWithGoogle();
+
+      idToken =
+        result?.credential?.idToken ||
+        result?.idToken ||
+        result?.user?.idToken;
+    } else {
+      const result = await signInWithPopup(auth, googleProvider);
+      idToken = await result.user.getIdToken();
+    }
+
+    if (!idToken) {
+      throw new Error("لم يتم استلام Google ID Token");
+    }
+
+    const { data } = await api.post("/auth/google", {
+      id_token: idToken,
+    });
+
+    localStorage.setItem("mt_token", data.token);
+    setUser(data.user);
+
+    return data.user;
+  };
+
   const logout = () => {
     localStorage.removeItem("mt_token");
     setUser(null);
@@ -52,7 +85,7 @@ export function AuthProvider({ children }) {
   const refreshUser = fetchMe;
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, apiErrorMessage }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout, refreshUser, apiErrorMessage }}>
       {children}
     </AuthContext.Provider>
   );
