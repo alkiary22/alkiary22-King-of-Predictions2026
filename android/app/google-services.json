@@ -13,7 +13,20 @@
           "package_name": "com.alkiary.hotspotsystem"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "966950889316-7b18p7bkqbbv37rcmgfo5obtfo0f2l0e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.alkiary.hotspotsystem",
+            "certificate_hash": "97b58d57df53d3c331b438187a669b874ac73b69"
+          }
+        },
+        {
+          "client_id": "966950889316-f0g2ef1hjk61lemqnpkuquppngehhirm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBh9Q93yPqhowMDCKOCx2f8jXX_Ge-K7fk"
@@ -21,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "966950889316-f0g2ef1hjk61lemqnpkuquppngehhirm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     },
@@ -32,7 +50,20 @@
           "package_name": "com.king.predictions"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "966950889316-clhv7m22pkdd3pate0aesjq42ls3r0b0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.king.predictions",
+            "certificate_hash": "97b58d57df53d3c331b438187a669b874ac73b69"
+          }
+        },
+        {
+          "client_id": "966950889316-f0g2ef1hjk61lemqnpkuquppngehhirm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBh9Q93yPqhowMDCKOCx2f8jXX_Ge-K7fk"
@@ -40,7 +71,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "966950889316-f0g2ef1hjk61lemqnpkuquppngehhirm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

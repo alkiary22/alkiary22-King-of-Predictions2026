@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
+import { cachedRequest } from "@/lib/queryCache";
 
 function rankStyle(rank) {
   if (rank <= 4) {
@@ -46,12 +47,18 @@ export default function CompetitionStandings({ competition }) {
 
       try {
 
-        const { data } = await api.get(
-          `/competitions/${competitionId}/standings?season=${competitionSeason}`
+        const data = await cachedRequest(
+          `standings:${competitionId}:${competitionSeason}`,
+          async () => {
+            const res = await api.get(
+              `/competitions/${competitionId}/standings?season=${competitionSeason}`
+            );
+            return Array.isArray(res.data) ? res.data : [];
+          }
         );
 
         if (active) {
-          setRows(Array.isArray(data) ? data : []);
+          setRows(data);
         }
 
       } catch (e) {

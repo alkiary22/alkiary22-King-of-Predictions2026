@@ -17,21 +17,11 @@ import Avatar from "../components/Avatar";
 const HERO_BG =
   "https://static.prod-images.emergentagent.com/jobs/36ca7cb1-56bf-4cbb-a9df-d07fc64af674/images/cf694e18d81a1e3b6118c5df05310e8b849aa4f259b4293ec8caeb6d2c40b94f.png";
 
-// Countdown to FIFA World Cup 2026 opening (Mexico vs South Africa, June 11 2026 22:00 Mecca = 19:00 UTC)
-const WC_OPENING_UTC = new Date("2026-06-11T19:00:00Z").getTime();
 
-function getCountdown() {
-  const diff = Math.max(0, WC_OPENING_UTC - Date.now());
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const minutes = Math.floor((diff % 3600000) / 60000);
-  return { days, hours, minutes, started: diff <= 0 };
-}
 
 export default function Landing() {
   const { user } = useAuth();
   const { t } = useContent();
-  const [cd, setCd] = useState(getCountdown());
 const [stats, setStats] = useState(null);
   const [marquee, setMarquee] = useState(
     "🏆 الرعاة الرسميون لجائزة ملك التوقعات"
@@ -58,11 +48,6 @@ const level =
     api.get("/marquee")
       .then((r) => setMarquee(r.data?.text || ""))
       .catch((e) => console.error("Failed to load marquee", e));
-  }, []);
-
-  useEffect(() => {
-    const id = setInterval(() => setCd(getCountdown()), 30000);
-    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -222,24 +207,7 @@ const level =
                 ? "كأس العالم 2026 على الأبواب — جاهز لتحطيم رقمك القياسي؟"
                 : t("landing_hero_desc")}
             </p>
-
-            {/* WC Countdown */}
-            {!cd.started && (
-              <div className="inline-flex items-center gap-4 sm:gap-6 px-4 py-3 lg:px-6 lg:py-4 rounded-2xl bg-black/40 backdrop-blur-md border border-gold/20 mb-1 animate-fade-in-up" data-testid="wc-countdown">
-                <div className="text-center">
-                  <p className="text-[10px] text-zinc-400 mb-1 uppercase tracking-widest">المباراة الافتتاحية بعد</p>
-                  <div className="flex items-center gap-3 sm:gap-5 justify-center">
-                    <Slot value={cd.days} label="يوم" />
-                    <span className="text-gold/40 text-2xl font-black">:</span>
-                    <Slot value={cd.hours} label="ساعة" />
-                    <span className="text-gold/40 text-2xl font-black">:</span>
-                    <Slot value={cd.minutes} label="دقيقة" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* CTAs */}
+{/* CTAs */}
             <div className="grid grid-cols-2 gap-2 md:gap-3 max-w-[360px] md:max-w-sm mx-auto animate-fade-in-up">
               {user ? (
                 <>
@@ -333,16 +301,6 @@ const level =
   );
 }
 
-function Slot({ value, label }) {
-  return (
-    <div className="flex flex-col items-center">
-      <span className="font-display text-3xl sm:text-4xl font-black text-gold tabular-nums">
-        {String(value).padStart(2, "0")}
-      </span>
-      <span className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">{label}</span>
-    </div>
-  );
-}
 
 function ScoreItem({ badge, title, desc, variant }) {
   const cls =

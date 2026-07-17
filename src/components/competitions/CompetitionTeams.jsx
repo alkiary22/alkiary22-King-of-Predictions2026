@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
+import { cachedRequest } from "@/lib/queryCache";
 
 export default function CompetitionTeams({ competition }) {
 
@@ -30,14 +31,18 @@ export default function CompetitionTeams({ competition }) {
 
       try {
 
-        const { data } = await api.get(
-          `/competitions/${competitionId}/teams?season=${competitionSeason}`
+        const data = await cachedRequest(
+          `teams:${competitionId}:${competitionSeason}`,
+          async () => {
+            const res = await api.get(
+              `/competitions/${competitionId}/teams?season=${competitionSeason}`
+            );
+            return Array.isArray(res.data) ? res.data : [];
+          }
         );
 
         if (active) {
-          setTeams(
-            Array.isArray(data) ? data : []
-          );
+          setTeams(data);
         }
 
       } catch (e) {

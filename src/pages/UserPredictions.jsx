@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 
 const TEST_API = "https://king-of-predictions-backend-test.onrender.com/api";
 const REFRESH_SECONDS = 30;
+const CACHE_KEY = "public_predictions_cache";
 
 const TEAM_NAMES = {
   ar:"الأرجنتين", at:"النمسا", mx:"المكسيك", za:"جنوب أفريقيا",
@@ -32,13 +33,44 @@ export default function UserPredictions() {
   const [err, setErr] = useState("");
   const [lastUpdate, setLastUpdate] = useState(null);
 
-  useEffect(() => {
-    loadRows(true);
-    const timer = setInterval(() => loadRows(false), REFRESH_SECONDS * 1000);
-    return () => clearInterval(timer);
-  }, []);
+  
+useEffect(() => {
 
-  async function loadRows(firstLoad = false) {
+  try{
+    const cache=JSON.parse(sessionStorage.getItem(CACHE_KEY)||"null");
+
+    if(cache?.rows?.length){
+
+      setRows(cache.rows);
+
+      setLastUpdate(new Date(cache.time));
+
+      setLoading(false);
+
+      const p=cache.rows[0];
+
+      if(p){
+        const home=teamName(p.home_team_name||p.home_team);
+        const away=teamName(p.away_team_name||p.away_team);
+        setSelected(p.match_id||`${home}-${away}`);
+      }
+
+    }
+
+  }catch{}
+
+  loadRows(true);
+
+  const timer=setInterval(
+    ()=>loadRows(false),
+    REFRESH_SECONDS*1000
+  );
+
+  return ()=>clearInterval(timer);
+
+}, []);
+
+async function loadRows(firstLoad = false) {
     if (firstLoad) setLoading(true);
     else setRefreshing(true);
 
@@ -58,6 +90,17 @@ export default function UserPredictions() {
       } else {
         const list = Array.isArray(data) ? data : [];
         setRows(list);
+
+        try{
+          sessionStorage.setItem(
+            CACHE_KEY,
+            JSON.stringify({
+              rows:list,
+              time:Date.now()
+            })
+          );
+        }catch{}
+
         setLastUpdate(new Date());
 
         setSelected((prev) => {

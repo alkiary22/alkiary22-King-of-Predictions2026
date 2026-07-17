@@ -7,6 +7,7 @@ import {
 import { useNavigate } from "react-router-dom";
 
 import api from "@/lib/api";
+import { cachedRequest, setCached } from "@/lib/queryCache";
 
 import {
   CalendarDays,
@@ -129,21 +130,47 @@ export default function CompetitionMatches({
 
     setFilter("all");
 
-    async function load() {
-      setLoading(true);
-      setError("");
+    async function load(silent = false) {
+      if (!silent) {
+        setLoading(true);
+        setError("");
+      }
+
+      const cacheKey = `matches:${competitionId}:${competitionSeason}`;
 
       try {
-        const { data } = await api.get(
-          `/competitions/${competitionId}/matches?season=${competitionSeason}`
-        );
+
+        let data;
+
+        if (silent) {
+          const res = await api.get(
+            `/competitions/${competitionId}/matches?season=${competitionSeason}`,
+            { params: { _live: Date.now() } }
+          );
+
+          data = Array.isArray(res.data) ? res.data : [];
+          setCached(cacheKey, data);
+
+        } else {
+
+          data = await cachedRequest(
+            cacheKey,
+            async () => {
+              const res = await api.get(
+                `/competitions/${competitionId}/matches?season=${competitionSeason}`
+              );
+
+              return Array.isArray(res.data)
+                ? res.data
+                : [];
+            }
+          );
+
+        }
 
         if (active) {
-          setMatches(
-            Array.isArray(data)
-              ? data
-              : []
-          );
+          setMatches(data);
+          setError("");
         }
       } catch (e) {
         console.error(
@@ -151,14 +178,14 @@ export default function CompetitionMatches({
           e
         );
 
-        if (active) {
+        if (active && !silent) {
           setError(
             e?.response?.data?.detail ||
             "تعذر تحميل مباريات البطولة"
           );
         }
       } finally {
-        if (active) {
+        if (active && !silent) {
           setLoading(false);
         }
       }
@@ -166,8 +193,13 @@ export default function CompetitionMatches({
 
     load();
 
+    const liveRefreshTimer = setInterval(() => {
+      load(true);
+    }, 15000);
+
     return () => {
       active = false;
+      clearInterval(liveRefreshTimer);
     };
   }, [
     competitionId,

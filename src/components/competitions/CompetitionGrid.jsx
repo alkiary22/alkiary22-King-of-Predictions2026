@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { prefetch } from "@/lib/queryCache";
 import api from "@/lib/api";
 
 import CompetitionMatches from "./CompetitionMatches";
@@ -14,6 +15,9 @@ import {
 } from "lucide-react";
 
 const FIXED_2026_LEAGUES = [1, 39, 140, 135, 78, 61];
+
+const COMP_CACHE_KEY="competitions-cache-v1";
+
 
 function getSeason(item) {
   const id = Number(item?.id);
@@ -72,6 +76,13 @@ export default function CompetitionGrid() {
   const [selectedId, setSelectedId] = useState(null);
   const [activeTab, setActiveTab] = useState("matches");
 
+  const [mountedTabs, setMountedTabs] = useState({
+    matches: true,
+    standings: false,
+    teams: false,
+    scorers: false,
+  });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -79,8 +90,33 @@ export default function CompetitionGrid() {
     let mounted = true;
 
     async function loadCompetitions() {
+
       try {
-        setLoading(true);
+
+        const cached=sessionStorage.getItem(COMP_CACHE_KEY);
+
+        if(cached){
+
+          try{
+
+            const list=JSON.parse(cached);
+
+            if(Array.isArray(list)&&list.length){
+
+              setCompetitions(list);
+
+              if(!selectedId){
+                setSelectedId(list[0].id);
+              }
+
+              setLoading(false);
+
+            }
+
+          }catch{}
+
+        }
+
         setError("");
 
         const { data } = await api.get("/competitions");
@@ -119,9 +155,14 @@ export default function CompetitionGrid() {
           })
         );
 
+        sessionStorage.setItem(
+          COMP_CACHE_KEY,
+          JSON.stringify(list)
+        );
+
         setCompetitions(list);
 
-        if (list.length > 0) {
+        if (list.length > 0 && !selectedId) {
           setSelectedId(list[0].id);
         }
       } catch (e) {
@@ -146,6 +187,88 @@ export default function CompetitionGrid() {
     };
   }, []);
 
+
+  useEffect(() => {
+    if (!selectedId) return;
+
+    const competition = competitions.find(c => c.id === selectedId);
+    if (!competition) return;
+
+    const season =
+      competition.effective_season ||
+      competition.current_season ||
+      competition.season ||
+      2026;
+
+    const id = competition.apiLeagueId || competition.id;
+
+    prefetch(
+      `standings:${id}:${season}`,
+      async () => (
+        await api.get(`/competitions/${id}/standings?season=${season}`)
+      ).data
+    );
+
+    prefetch(
+      `teams:${id}:${season}`,
+      async () => (
+        await api.get(`/competitions/${id}/teams?season=${season}`)
+      ).data
+    );
+
+    prefetch(
+      `scorers:${id}:${season}`,
+      async () => (
+        await api.get(`/competitions/${id}/scorers?season=${season}`)
+      ).data
+    );
+
+  }, [selectedId, competitions]);
+
+
+  useEffect(() => {
+
+    if (!competitions.length) return;
+
+    const c=competitions[0];
+
+    const season=
+      c.effective_season||
+      c.current_season||
+      c.season||
+      2026;
+
+    const id=c.apiLeagueId||c.id;
+
+    prefetch(
+      `matches:${id}:${season}`,
+      async()=>(
+        await api.get(`/competitions/${id}/matches?season=${season}`)
+      ).data
+    );
+
+    prefetch(
+      `standings:${id}:${season}`,
+      async()=>(
+        await api.get(`/competitions/${id}/standings?season=${season}`)
+      ).data
+    );
+
+    prefetch(
+      `teams:${id}:${season}`,
+      async()=>(
+        await api.get(`/competitions/${id}/teams?season=${season}`)
+      ).data
+    );
+
+    prefetch(
+      `scorers:${id}:${season}`,
+      async()=>(
+        await api.get(`/competitions/${id}/scorers?season=${season}`)
+      ).data
+    );
+
+  },[competitions]);
   const selectedCompetition =
     competitions.find(
       (competition) =>
@@ -168,34 +291,32 @@ export default function CompetitionGrid() {
       return null;
     }
 
-    if (activeTab === "standings") {
-      return (
-        <CompetitionStandings
-          competition={selectedCompetition}
-        />
-      );
-    }
-
-    if (activeTab === "teams") {
-      return (
-        <CompetitionTeams
-          competition={selectedCompetition}
-        />
-      );
-    }
-
-    if (activeTab === "scorers") {
-      return (
-        <CompetitionScorers
-          competition={selectedCompetition}
-        />
-      );
-    }
-
     return (
-      <CompetitionMatches
-        competition={selectedCompetition}
-      />
+      <>
+        {mountedTabs.matches && (
+          <div style={{ display: activeTab === "matches" ? "block" : "none" }}>
+            <CompetitionMatches competition={selectedCompetition} />
+          </div>
+        )}
+
+        {mountedTabs.standings && (
+          <div style={{ display: activeTab === "standings" ? "block" : "none" }}>
+            <CompetitionStandings competition={selectedCompetition} />
+          </div>
+        )}
+
+        {mountedTabs.teams && (
+          <div style={{ display: activeTab === "teams" ? "block" : "none" }}>
+            <CompetitionTeams competition={selectedCompetition} />
+          </div>
+        )}
+
+        {mountedTabs.scorers && (
+          <div style={{ display: activeTab === "scorers" ? "block" : "none" }}>
+            <CompetitionScorers competition={selectedCompetition} />
+          </div>
+        )}
+      </>
     );
   }
 
@@ -353,9 +474,13 @@ export default function CompetitionGrid() {
                   <button
                     key={tab.id}
                     type="button"
-                    onClick={() =>
-                      setActiveTab(tab.id)
-                    }
+                    onClick={() => {
+                      setMountedTabs((prev) => ({
+                        ...prev,
+                        [tab.id]: true,
+                      }));
+                      setActiveTab(tab.id);
+                    }}
                     className={`
                       min-w-0
                       h-[58px]
