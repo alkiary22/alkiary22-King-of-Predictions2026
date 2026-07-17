@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android Release APK
 
 on:
   workflow_dispatch:
@@ -51,20 +51,33 @@ jobs:
       - name: Install Capacitor Android
         run: npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps
 
+      - name: Restore Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > android/app/KingPredictions.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storeFile=app/KingPredictions.jks
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
       - name: Sync Android
         run: npx cap sync android
 
-      - name: Build APK
+      - name: Build Release APK
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew clean assembleDebug
+          ./gradlew clean assembleRelease
 
       - name: Prepare APK
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
 
-          cp android/app/build/outputs/apk/debug/app-debug.apk \
+          cp android/app/build/outputs/apk/release/app-release.apk \
             "King-Predictions-${SHORT_SHA}.apk"
 
           echo "APK_NAME=King-Predictions-${SHORT_SHA}" >> "$GITHUB_ENV"
