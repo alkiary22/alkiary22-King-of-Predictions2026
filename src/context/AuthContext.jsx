@@ -54,13 +54,20 @@ export function AuthProvider({ children }) {
     if (Capacitor.isNativePlatform()) {
       const result = await FirebaseAuthentication.signInWithGoogle();
 
-      idToken =
-        result?.credential?.idToken ||
-        result?.idToken ||
-        result?.user?.idToken;
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        idToken = await currentUser.getIdToken(true);
+      }
+
+      if (!idToken) {
+        idToken =
+          result?.user?.idToken ||
+          result?.credential?.idToken ||
+          result?.idToken;
+      }
     } else {
       const result = await signInWithPopup(auth, googleProvider);
-      idToken = await result.user.getIdToken();
+      idToken = await result.user.getIdToken(true);
     }
 
     if (!idToken) {
