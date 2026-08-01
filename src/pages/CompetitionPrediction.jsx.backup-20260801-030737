@@ -143,9 +143,6 @@ export default function CompetitionPrediction() {
   const competition =
     location.state?.competition || null;
 
-const matchId = location.state?.matchId || null;
-const { user } = useAuth();
-
   const storageKey =
     `competition_prediction_${fixtureId}`;
 
@@ -309,36 +306,48 @@ const { user } = useAuth();
     away?.name_en ||
     "الضيف";
 
-  
-function savePrediction() {
+  function savePrediction() {
+    const prediction = {
+      fixture_id: fixtureId,
+      competition_id:
+        competition?.id ||
+        competition?.apiLeagueId ||
+        null,
+      home_score: Number(homeScore),
+      away_score: Number(awayScore),
+      winner,
+      saved_at:
+        new Date().toISOString(),
+    };
 
-  if (!user) {
-    setSavedMessage("يجب تسجيل الدخول");
-    return;
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify(prediction)
+      );
+
+      setSavedPrediction(prediction);
+
+      setSavedMessage(
+        "تم تثبيت توقعك بنجاح 👑"
+      );
+
+      window.setTimeout(() => {
+        setSavedMessage("");
+      }, 3000);
+    } catch (error) {
+      console.error(
+        "Save competition prediction error:",
+        error
+      );
+
+      setSavedMessage(
+        "تعذر حفظ التوقع"
+      );
+    }
   }
 
-  if (!matchId) {
-    setSavedMessage("هذه المباراة غير متاحة للتوقع");
-    return;
-  }
-
-  api.post("/predictions",{
-    match_id:matchId,
-    home_score:Number(homeScore),
-    away_score:Number(awayScore),
-  })
-  .then(({data})=>{
-    setSavedPrediction(data);
-    setSavedMessage("تم تثبيت توقعك بنجاح 👑");
-    setTimeout(()=>setSavedMessage(""),3000);
-  })
-  .catch((e)=>{
-    setSavedMessage(apiErrorMessage(e));
-  });
-
-}
-
-const selectedPulse =
+  const selectedPulse =
     pulseChoice || winner;
 
   const selectedPulsePercent =

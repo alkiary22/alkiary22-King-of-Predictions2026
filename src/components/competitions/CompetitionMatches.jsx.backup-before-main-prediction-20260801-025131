@@ -5,7 +5,6 @@ import {
 } from "react";
 
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
 import api from "@/lib/api";
 import { cachedRequest, setCached } from "@/lib/queryCache";
@@ -384,7 +383,6 @@ export default function CompetitionMatches({
                       state: {
                         match,
                         competition,
-                        match_id: match.match_id || match.id || null,
                       },
                     }
                   );

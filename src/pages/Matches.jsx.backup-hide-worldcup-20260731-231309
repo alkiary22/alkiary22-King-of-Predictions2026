@@ -212,9 +212,7 @@ useEffect(() => {
             الكل
           </button>
 
-          {competitions
-          .filter((item) => Number(item.id) !== 1)
-          .map((item) => {
+          {competitions.map((item) => {
             const value =
               Number(item.id) === 1
                 ? "worldcup"

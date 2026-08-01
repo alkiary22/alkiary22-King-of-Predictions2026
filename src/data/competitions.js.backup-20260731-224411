@@ -8,7 +8,17 @@ import saudi from "@/assets/competitions/saudi.png";
 import ucl from "@/assets/competitions/ucl.png";
 
 const competitions = [
-{
+  {
+    id: "worldcup",
+    apiLeagueId: 1,
+    title: "كأس العالم",
+    season: 2026,
+    image: worldcup,
+    color: "#D4AF37",
+    teams: 48,
+    route: "/competition/worldcup",
+  },
+  {
     id: "epl",
     apiLeagueId: 39,
     title: "الدوري الإنجليزي",
