@@ -36,12 +36,14 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build web assets
+      - name: Use current web build
         run: |
-          CI=false npm run build
-
-          echo "===== BUILD CONTENT CHECK ====="
-          grep -R -l '2025/2026' build/static/js/*.js | head || true
+          echo "===== USING CURRENT WEB DIST ====="
+          test -f dist/index.html
+          echo "===== DIST SIZE ====="
+          du -sh dist
+          echo "===== DIST FILES ====="
+          find dist -maxdepth 2 -type f | head -30
 
       - uses: actions/setup-java@v4
         with:
