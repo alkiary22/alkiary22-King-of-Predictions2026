@@ -62,6 +62,14 @@ jobs:
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > android/app/KingPredictions.jks
 
+      - name: Show Release Certificate SHA
+        run: |
+          echo "===== RELEASE CERTIFICATE ====="
+          keytool -list -v \
+            -keystore android/app/KingPredictions.jks \
+            -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            | grep -E "Alias name:|SHA1:|SHA256:"
+
       - name: Create key.properties
         run: |
           cat > android/key.properties <<EOF
