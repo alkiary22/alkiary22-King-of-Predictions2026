@@ -36,14 +36,19 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Use current web build
+      - name: Prepare current web build for Capacitor
         run: |
           echo "===== USING CURRENT WEB DIST ====="
           test -f dist/index.html
-          echo "===== DIST SIZE ====="
-          du -sh dist
-          echo "===== DIST FILES ====="
-          find dist -maxdepth 2 -type f | head -30
+
+          rm -rf build
+          cp -r dist build
+
+          echo "===== BUILD SIZE ====="
+          du -sh build
+
+          echo "===== BUILD INDEX ====="
+          test -f build/index.html
 
       - uses: actions/setup-java@v4
         with:
