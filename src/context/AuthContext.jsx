@@ -52,20 +52,27 @@ export function AuthProvider({ children }) {
     let idToken = null;
 
     if (Capacitor.isNativePlatform()) {
+      // Native Android:
+      // احصل على Google ID Token مباشرة من Capacitor Firebase.
       const result = await FirebaseAuthentication.signInWithGoogle();
 
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        idToken = await currentUser.getIdToken(true);
-      }
+      idToken =
+        result?.credential?.idToken ||
+        result?.user?.idToken ||
+        result?.idToken ||
+        null;
 
+      // بعض إصدارات Firebase Authentication قد لا تعيد
+      // الـ token في النتيجة، لذلك نجرب Firebase Web Auth كاحتياط.
       if (!idToken) {
-        idToken =
-          result?.user?.idToken ||
-          result?.credential?.idToken ||
-          result?.idToken;
+        const currentUser = auth.currentUser;
+
+        if (currentUser) {
+          idToken = await currentUser.getIdToken(true);
+        }
       }
     } else {
+      // Web فقط: لا نغيّر مسار تسجيل الويب.
       const result = await signInWithPopup(auth, googleProvider);
       idToken = await result.user.getIdToken(true);
     }
