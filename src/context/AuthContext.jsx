@@ -78,12 +78,49 @@ export function AuthProvider({ children }) {
     }
 
     if (!idToken) {
+      console.error("GOOGLE DEBUG: No ID token received");
       throw new Error("لم يتم استلام Google ID Token");
     }
 
-    const { data } = await api.post("/auth/google", {
-      id_token: idToken,
-    });
+    console.log(
+      "GOOGLE DEBUG: ID token received, length:",
+      String(idToken).length
+    );
+
+    console.log(
+      "GOOGLE DEBUG: API base:",
+      api.defaults?.baseURL
+    );
+
+    try {
+      const { data } = await api.post("/auth/google", {
+        id_token: idToken,
+      });
+
+      console.log(
+        "GOOGLE DEBUG: Backend response:",
+        data
+      );
+
+      localStorage.setItem("mt_token", data.token);
+      setUser(data.user);
+
+      return data.user;
+    } catch (error) {
+      console.error(
+        "GOOGLE DEBUG: Backend request failed:",
+        {
+          message: error?.message,
+          code: error?.code,
+          status: error?.response?.status,
+          data: error?.response?.data,
+          url: error?.config?.url,
+          baseURL: error?.config?.baseURL,
+        }
+      );
+
+      throw error;
+    }
 
     localStorage.setItem("mt_token", data.token);
     setUser(data.user);
