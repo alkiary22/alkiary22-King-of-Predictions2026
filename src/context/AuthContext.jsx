@@ -52,15 +52,18 @@ export function AuthProvider({ children }) {
     let idToken = null;
 
     if (Capacitor.isNativePlatform()) {
-      const result = await FirebaseAuthentication.signInWithGoogle();
+      // Native Android:
+      // تسجيل الدخول عبر Google ثم الحصول على Firebase ID Token الحقيقي.
+      await FirebaseAuthentication.signInWithGoogle();
 
-      idToken =
-        result?.credential?.idToken ||
-        result?.idToken ||
-        result?.user?.idToken;
+      const firebaseTokenResult =
+        await FirebaseAuthentication.getIdToken({ forceRefresh: true });
+
+      idToken = firebaseTokenResult?.token || null;
     } else {
+      // Web:
       const result = await signInWithPopup(auth, googleProvider);
-      idToken = await result.user.getIdToken();
+      idToken = await result.user.getIdToken(true);
     }
 
     if (!idToken) {
