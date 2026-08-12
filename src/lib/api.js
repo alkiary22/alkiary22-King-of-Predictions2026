@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Capacitor } from "@capacitor/core";
 
 // Production backend (Render)
 const PROD_BACKEND_URL = "https://kingbackend-apk.onrender.com";
@@ -25,7 +26,14 @@ const host =
 // لو الواجهة تعمل محليًا/على IP داخلي، خلّ الباكند المحلي على نفس الجهاز/الشبكة
 const DEV_BACKEND_URL = `http://${host === "localhost" ? "127.0.0.1" : host}:8000`;
 
-const BACKEND_URL = isPrivateHost(host) ? DEV_BACKEND_URL : PROD_BACKEND_URL;
+// داخل تطبيق Capacitor لا نستخدم localhost إطلاقًا.
+// WebView في Android يستخدم hostname = localhost، لكن الـBackend الحقيقي على Render.
+const isNativeApp = Capacitor.isNativePlatform();
+
+const BACKEND_URL =
+  isNativeApp
+    ? PROD_BACKEND_URL
+    : (isPrivateHost(host) ? DEV_BACKEND_URL : PROD_BACKEND_URL);
 
 export const API = `${BACKEND_URL}/api`;
 
