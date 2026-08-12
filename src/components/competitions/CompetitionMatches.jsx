@@ -5,6 +5,7 @@ import {
 } from "react";
 
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import api from "@/lib/api";
 import { cachedRequest, setCached } from "@/lib/queryCache";
@@ -111,6 +112,15 @@ export default function CompetitionMatches({
   const [filter, setFilter] =
     useState("all");
 
+  // الدوري السعودي: ابدأ تلقائيًا من الجولة الأولى
+  const isSaudiLeague =
+    String(competition?.id || competition?.apiLeagueId) === "307" ||
+    String(competition?.title || competition?.name || "")
+      .includes("السعودي");
+
+  const [selectedRound, setSelectedRound] =
+    useState("1");
+
   const competitionId =
     competition?.id ||
     competition?.apiLeagueId;
@@ -129,6 +139,11 @@ export default function CompetitionMatches({
     let active = true;
 
     setFilter("all");
+
+    // عند فتح الدوري السعودي نبدأ دائمًا من الجولة الأولى
+    if (String(competitionId) === "307") {
+      setSelectedRound("1");
+    }
 
     async function load(silent = false) {
       if (!silent) {
@@ -223,16 +238,62 @@ export default function CompetitionMatches({
     return result;
   }, [matches]);
 
+  // استخراج رقم الجولة من بيانات API-Football
+  const getRoundNumber = (match) => {
+    const value =
+      match?.league?.round ||
+      match?.league?.round_en ||
+      match?.league?.round_ar ||
+      "";
+
+    const text = String(value);
+
+    // أمثلة:
+    // Regular Season - 1
+    // Regular Season - 16
+    // الجولة 1
+    const matchNumber = text.match(/(\d+)/);
+
+    return matchNumber ? String(Number(matchNumber[1])) : "";
+  };
+
+  // جميع الجولات الموجودة فعليًا في البيانات
+  const rounds = useMemo(() => {
+    if (!isSaudiLeague) return [];
+
+    const nums = matches
+      .map(getRoundNumber)
+      .filter(Boolean)
+      .map(Number);
+
+    return [...new Set(nums)].sort((a, b) => a - b);
+  }, [matches, isSaudiLeague]);
+
   const filteredMatches = useMemo(() => {
-    if (filter === "all") {
-      return matches;
+    let list = matches;
+
+    // الدوري السعودي يبدأ من الجولة المحددة
+    if (isSaudiLeague && selectedRound !== "all") {
+      list = list.filter(
+        (match) =>
+          getRoundNumber(match) === String(selectedRound)
+      );
     }
 
-    return matches.filter(
+    if (filter === "all") {
+      return list;
+    }
+
+    return list.filter(
       (match) =>
         matchType(match) === filter
     );
-  }, [matches, filter]);
+  }, [
+    matches,
+    filter,
+    isSaudiLeague,
+    selectedRound,
+  ]);
 
   const filters = [
     {
@@ -275,6 +336,55 @@ export default function CompetitionMatches({
 
   return (
     <div>
+      {isSaudiLeague && rounds.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h3 className="text-white font-black text-lg">
+              جولات الدوري السعودي
+            </h3>
+
+            <span className="text-xs text-zinc-500">
+              الجولة الحالية: {selectedRound === "all" ? "الكل" : selectedRound}
+            </span>
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {rounds.map((round) => {
+              const active =
+                String(selectedRound) === String(round);
+
+              return (
+                <button
+                  key={round}
+                  type="button"
+                  onClick={() => {
+                    setSelectedRound(String(round));
+                    setFilter("all");
+                  }}
+                  className={`
+                    shrink-0
+                    px-4
+                    py-3
+                    rounded-xl
+                    border
+                    font-black
+                    text-sm
+                    transition-all
+                    ${
+                      active
+                        ? "bg-[#DDBA35] text-black border-[#D4AF37] shadow-[0_6px_20px_rgba(212,175,55,.18)]"
+                        : "bg-[#151515] text-zinc-300 border-white/10"
+                    }
+                  `}
+                >
+                  الجولة {round}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div
         className="
           grid
@@ -383,6 +493,7 @@ export default function CompetitionMatches({
                       state: {
                         match,
                         competition,
+                        match_id: match.match_id || match.id || null,
                       },
                     }
                   );

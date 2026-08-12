@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { Home, CalendarDays, Trophy, User, Crown } from "lucide-react";
+import { prefetchData } from "../hooks/usePrefetch";
 
 const items = [
   {
@@ -29,6 +30,21 @@ const items = [
     icon: User,
   },
 ];
+
+
+// 🚀 Prefetch عند لمس/تمرير على الرابط
+const __prefetchOnHover = (path) => {
+  const map = {
+    "/": "/matches",
+    "/matches": "/matches",
+    "/leaderboard": "/leaderboard?period=weekly",
+    "/leaders": "/leaderboard?period=weekly",
+    "/competitions": "/competitions",
+    "/tournaments": "/competitions",
+  };
+  const endpoint = map[path];
+  if (endpoint) prefetchData(endpoint);
+};
 
 export default function AndroidBottomNav() {
   return (

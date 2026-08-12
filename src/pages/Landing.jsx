@@ -69,9 +69,9 @@ const level =
 
 
   return (
-    <div className="min-h-screen bg-base text-white" data-testid="landing-page">
+    <div className="landing-premium min-h-screen bg-base text-white" data-testid="landing-page">
       {/* Hero */}
-      <section className="relative overflow-hidden md:min-h-[78vh] flex items-start pt-3 md:pt-5">
+      <section className="landing-hero relative overflow-hidden md:min-h-[78vh] flex items-start pt-3 md:pt-5">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-50"
           style={{ backgroundImage: `url(${HERO_BG})` }}
@@ -81,13 +81,15 @@ const level =
         {/* Decorative glow */}
         <div className="absolute -top-32 right-1/2 translate-x-1/2 w-[40rem] h-[40rem] rounded-full bg-gold/10 blur-[120px] pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 md:pt-4 pb-4 md:pb-10 w-full">
+        <div className="landing-hero-content relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 md:pt-4 pb-4 md:pb-10 w-full">
           <div className="max-w-4xl mx-auto text-center">
             <PushEnableBanner />
-            <AdSlider />
+            <div className="landing-sponsor-slot">
+              <AdSlider />
+            </div>
 
             {marquee && (
-              <div className="home-marquee-bar">
+              <div className="home-marquee-bar landing-marquee">
                 <div className="home-marquee-track">
                   {marquee}
                 </div>
@@ -95,11 +97,11 @@ const level =
             )}
 
             {/* Crown badge */}
-            <div className="inline-flex items-center justify-center w-12 h-12 md:w-20 md:h-20 rounded-full bg-gold shadow-[0_0_35px_rgba(255,215,0,0.35)] mb-1 md:mb-2 animate-fade-in-up">
+            <div className="landing-crown inline-flex items-center justify-center w-12 h-12 md:w-20 md:h-20 rounded-full bg-gold shadow-[0_0_35px_rgba(255,215,0,0.35)] mb-1 md:mb-2 animate-fade-in-up">
               <Crown className="w-7 h-7 md:w-11 md:h-11 text-black" strokeWidth={2.3} />
             </div>
 
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-gold/10 border border-gold/30 mb-2 animate-fade-in-up">
+            <div className="landing-badge inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-gold/10 border border-gold/30 mb-2 animate-fade-in-up">
               <Sparkles className="w-4 h-4 text-gold" />
               <span className="text-xs font-bold text-gold uppercase tracking-[0.25em]">
                 {t("landing_badge")}
@@ -108,7 +110,7 @@ const level =
             </div>
 
             {user ? (
-<div className="mx-auto w-full max-w-[360px] md:max-w-md rounded-[22px] md:rounded-3xl border border-gold/20 bg-black/55 backdrop-blur-xl p-4 md:p-6 mb-1 shadow-[0_0_30px_rgba(255,215,0,.10)] animate-fade-in-up user-card">
+<div className="mx-auto w-full max-w-[360px] md:max-w-md rounded-[22px] md:rounded-3xl border border-gold/20 bg-black/55 backdrop-blur-xl p-4 md:p-6 mb-1 shadow-[0_0_30px_rgba(255,215,0,.10)] animate-fade-in-up user-card landing-user-card">
 <div className="flex items-center justify-between">
 <div>
 <p className="text-zinc-400 text-[12px] md:text-sm">👋 أهلاً بعودتك</p>
@@ -202,13 +204,13 @@ const level =
               </h1>
             )}
 
-            <p className="text-[13px] sm:text-xl text-zinc-300 leading-5 md:leading-relaxed mb-1 max-w-2xl mx-auto animate-fade-in-up px-2">
+            <p className="landing-mission text-[13px] sm:text-xl text-zinc-300 leading-5 md:leading-relaxed mb-1 max-w-2xl mx-auto animate-fade-in-up px-2">
               {user
                 ? "كأس العالم 2026 على الأبواب — جاهز لتحطيم رقمك القياسي؟"
                 : t("landing_hero_desc")}
             </p>
 {/* CTAs */}
-            <div className="grid grid-cols-2 gap-2 md:gap-3 max-w-[360px] md:max-w-sm mx-auto animate-fade-in-up">
+            <div className="landing-cta-grid grid grid-cols-2 gap-2 md:gap-3 max-w-[360px] md:max-w-sm mx-auto animate-fade-in-up">
               {user ? (
                 <>
                   <Link

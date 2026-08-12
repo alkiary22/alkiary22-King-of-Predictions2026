@@ -7,6 +7,7 @@ import AvatarUploader from "../components/AvatarUploader";
 import { enablePushNotifications } from "../lib/push";
 import { enableNativePush } from "../lib/nativePush";
 import { isNative } from "../lib/platform";
+import TeamLogo from "../components/TeamLogo";
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
@@ -164,11 +165,11 @@ export default function Profile() {
                   className="p-5 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Flag code={home?.code} size="w-8 h-6" />
+                    <TeamLogo team={home} size="w-9 h-9" />
                     <span className="text-sm font-medium truncate">{home?.name_ar}</span>
                     <span className="text-xs text-zinc-500">ضد</span>
                     <span className="text-sm font-medium truncate">{away?.name_ar}</span>
-                    <Flag code={away?.code} size="w-8 h-6" />
+                    <TeamLogo team={away} size="w-9 h-9" />
                   </div>
                   <div className="flex items-center gap-4 shrink-0">
                     <div className="text-center">

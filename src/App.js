@@ -35,6 +35,8 @@ import { Capacitor } from "@capacitor/core";
 import { listenForegroundNotifications } from "@/lib/push";
 import { listenNativeNotifications, autoEnableNativePush } from "@/lib/nativePush";
 import { isNative } from "@/lib/platform";
+import { prefetchAllTabs } from "./hooks/usePrefetch";
+import { useEffect as _useEffectPrefetch } from "react";
 
 function Layout({ children }) {
   return (
@@ -86,6 +88,11 @@ function PushNavigationBridge() {
 }
 
 function App() {
+  _useEffectPrefetch(() => {
+    // 🚀 تحميل مسبق لجميع التبويبات
+    prefetchAllTabs();
+  }, []);
+
   const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter;
 
   const [online, setOnline] = useState(

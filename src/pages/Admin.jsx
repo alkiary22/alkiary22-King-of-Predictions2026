@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import ContentEditor from "../components/ContentEditor";
 import AdminBroadcastPush from "../components/AdminBroadcastPush";
 import { toast } from "sonner";
+import TeamLogo from "../components/TeamLogo";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -39,6 +40,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [resultModal, setResultModal] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [addFromCompOpen, setAddFromCompOpen] = useState(false);
   const [lastSync, setLastSync] = useState(null);
   const [tab, setTab] = useState("matches");
   const [users, setUsers] = useState([]);
@@ -85,6 +87,45 @@ export default function Admin() {
         .then((us) => setUsers(us.data || []))
         .catch(() => setUsers([]));
     } catch (e) {
+      console.log("========== CREATE MATCH ERROR ==========");
+      console.log(e);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
+
+      alert(
+        JSON.stringify(
+          {
+            status: e?.response?.status,
+            data: e?.response?.data,
+          },
+          null,
+          2
+        )
+      );
+
+      console.log("========== AXIOS ERROR ==========");
+console.log(e);
+console.log("message =", e?.message);
+console.log("code =", e?.code);
+console.log("response =", e?.response);
+console.log("request =", e?.request);
+alert(
+JSON.stringify({
+message:e?.message,
+code:e?.code,
+status:e?.response?.status,
+data:e?.response?.data
+},null,2)
+);
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
+      console.log("=== ADD MATCH ERROR ===");
+      console.log(e);
+      console.log("message:", e?.message);
+      console.log("response:", e?.response);
+      console.log("request:", e?.request);
       toast.error(apiErrorMessage(e));
     } finally {
       setLoading(false);
@@ -109,6 +150,10 @@ export default function Admin() {
       toast.success("تم تعديل وقت المباراة");
       reload();
     } catch (e) {
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     }
   };
@@ -120,6 +165,10 @@ export default function Admin() {
       toast.success("تم الحذف");
       reload();
     } catch (e) {
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     }
   };
@@ -133,6 +182,10 @@ export default function Admin() {
       toast.success(`تمت إضافة ${data.inserted} مباراة من الجدول الرسمي`);
       reload();
     } catch (e) {
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     }
   };
@@ -148,6 +201,37 @@ export default function Admin() {
       toast.success(data?.message || `تم استيراد ${data?.created || 0} مباراة جديدة`);
       await reload();
     } catch (e) {
+      console.error("========== ADD MATCH ERROR ==========");
+      console.error("Message:", e?.message);
+      console.error("Status:", e?.response?.status);
+      console.error("Data:", e?.response?.data);
+      console.error("Headers:", e?.response?.headers);
+      console.error("Request:", {
+        home_team: home,
+        away_team: away,
+        match_date: date,
+        kickoff: kickoff,
+        competition,
+        stage: stage === "الجولة" ? `الجولة ${roundNumber}` : stage,
+        group_name: groupName || null,
+      });
+
+      alert(
+        JSON.stringify(
+          {
+            message: e?.message,
+            status: e?.response?.status,
+            data: e?.response?.data,
+          },
+          null,
+          2
+        )
+      );
+
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     } finally {
       setSyncing(false);
@@ -190,6 +274,10 @@ export default function Admin() {
 
     } catch (e) {
 
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
 
     } finally {
@@ -213,6 +301,22 @@ export default function Admin() {
         toast.message(`لا توجد نتائج جديدة للتحديث (تم فحص ${data.checked || 0} مباراة منتهية)`);
       }
     } catch (e) {
+      console.log("CREATE MATCH ERROR:", e);
+      console.log("RESPONSE:", e?.response);
+      console.log("DATA:", e?.response?.data);
+
+      alert(
+        JSON.stringify(
+          e?.response?.data || e?.message || e,
+          null,
+          2
+        )
+      );
+
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     } finally {
       setSyncing(false);
@@ -226,6 +330,10 @@ export default function Admin() {
       toast.success("تم حذف الحساب");
       reload();
     } catch (e) {
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     }
   };
@@ -246,6 +354,10 @@ export default function Admin() {
       toast.success(promote ? `تمت ترقية "${u.name}" إلى مشرف` : `تمت إعادة "${u.name}" إلى لاعب`);
       reload();
     } catch (e) {
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     }
   };
@@ -336,7 +448,7 @@ export default function Admin() {
           syncing={syncing}
           onImportNew={handleImportNewFixtures}
           onSeed={handleSeedFixtures}
-          onAdd={() => setCreateOpen(true)}
+          onAdd={() => setCreateOpen(true)}          onAddFromCompetition={() => setAddFromCompOpen(true)}
           onResult={(m) => setResultModal(m)}
           onEditTime={handleEditTime}
           onDelete={handleDelete}
@@ -376,6 +488,14 @@ export default function Admin() {
       {createOpen && (
         <CreateMatchModal teams={teams} onClose={() => setCreateOpen(false)} onCreated={reload} />
       )}
+      {addFromCompOpen && (
+        <AddFromCompetitionModal
+          competitions={competitions}
+          onClose={() => setAddFromCompOpen(false)}
+          onCreated={reload}
+        />
+      )}
+
       {resultModal && (
         <ResultModal match={resultModal} onClose={() => setResultModal(null)} onSaved={reload} />
       )}
@@ -433,6 +553,7 @@ function MatchesTab({
   onImportNew,
   onSeed,
   onAdd,
+  onAddFromCompetition,
   onResult,
   onEditTime,
   onDelete,
@@ -520,6 +641,13 @@ function MatchesTab({
           >
             <Plus className="w-4 h-4" /> إضافة مباراة
           </button>
+                                <button
+                                  onClick={onAddFromCompetition}
+                                  data-testid="add-from-competition-button"
+                                  className="flex items-center gap-2 px-5 py-3 rounded-lg bg-white/5 border border-white/15 text-white font-bold hover:bg-white/10 active:scale-95 transition-all"
+                                >
+                                  إضافة من البطولات
+                                </button>
         </div>
       </div>
 
@@ -671,13 +799,13 @@ function MatchesTab({
                 <div key={m.id} className="glass-card rounded-2xl p-4 border border-white/10" data-testid={`admin-match-card-${m.id}`}>
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2 min-w-0">
-                      <Flag code={home?.code} size="w-7 h-5" />
+                      <Flag code={home?.code} logo={m.home_team_logo || home?.logo} size="w-7 h-5" />
                       <span className="font-bold truncate">{home?.name_ar}</span>
                     </div>
                     <span className="text-zinc-500 text-xs">ضد</span>
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="font-bold truncate">{away?.name_ar}</span>
-                      <Flag code={away?.code} size="w-7 h-5" />
+                      <Flag code={away?.code} logo={m.away_team_logo || away?.logo} size="w-7 h-5" />
                     </div>
                   </div>
 
@@ -765,11 +893,11 @@ function MatchesTab({
                     <tr key={m.id} className="border-t border-white/5" data-testid={`admin-match-row-${m.id}`}>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <Flag code={home?.code} size="w-7 h-5" />
+                          <Flag code={home?.code} logo={m.home_team_logo || home?.logo} size="w-7 h-5" />
                           <span className="font-bold">{home?.name_ar}</span>
                           <span className="text-zinc-500 mx-1">ضد</span>
                           <span className="font-bold">{away?.name_ar}</span>
-                          <Flag code={away?.code} size="w-7 h-5" />
+                          <Flag code={away?.code} logo={m.away_team_logo || away?.logo} size="w-7 h-5" />
                         </div>
                       </td>
                       <td className="p-4 text-zinc-300">{m.match_date}</td>
@@ -1170,6 +1298,10 @@ function PasswordResetModal({ user, onClose, onSaved }) {
       toast.success(`تم تغيير كلمة مرور "${user.name}" بنجاح`);
       onSaved?.();
     } catch (e) {
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     } finally {
       setSaving(false);
@@ -1294,6 +1426,10 @@ function EditUserModal({ user, onClose, onSaved }) {
       onSaved();
       onClose();
     } catch (e) {
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     } finally {
       setSaving(false);
@@ -1338,6 +1474,7 @@ function CreateMatchModal({ teams, onClose, onCreated }) {
   const [date, setDate] = useState(todayISO());
   const [kickoff, setKickoff] = useState(defaultKickoff());
   const [stage, setStage] = useState("مرحلة المجموعات");
+  const [roundNumber, setRoundNumber] = useState(1);
   const [groupName, setGroup] = useState("");
   const [competition, setCompetition] = useState("worldcup");
   const [saving, setSaving] = useState(false);
@@ -1354,15 +1491,16 @@ function CreateMatchModal({ teams, onClose, onCreated }) {
         home_team: home,
         away_team: away,
         match_date: date,
-        kickoff: `${kickoff}:00+03:00`,
+        kickoff: kickoff,
         competition,
-        stage,
+        stage: stage === "الجولة" ? `الجولة ${roundNumber}` : stage,
         group_name: groupName || null,
       });
       toast.success("تمت إضافة المباراة");
-      onCreated();
-      onClose();
+      onCreated?.();
+      onClose?.();
     } catch (e) {
+      console.log("ADD MATCH ERROR:", e);
       toast.error(apiErrorMessage(e));
     } finally {
       setSaving(false);
@@ -1424,6 +1562,7 @@ function CreateMatchModal({ teams, onClose, onCreated }) {
               className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white focus:border-gold outline-none"
             >
               <option>مرحلة المجموعات</option>
+              <option>الجولة</option>
               <option>دور الـ32</option>
               <option>دور الـ16</option>
               <option>ربع النهائي</option>
@@ -1432,6 +1571,19 @@ function CreateMatchModal({ teams, onClose, onCreated }) {
               <option>تحديد المركز الثالث</option>
             </select>
           </FormField>
+
+          {stage === "الجولة" && (
+            <FormField label="رقم الجولة">
+              <input
+                type="number"
+                min="1"
+                value={roundNumber}
+                onChange={(e) => setRoundNumber(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white focus:border-gold outline-none"
+              />
+            </FormField>
+          )}
+
           <FormField label="المجموعة (اختياري)">
             <input
               type="text"
@@ -1465,6 +1617,432 @@ function CreateMatchModal({ teams, onClose, onCreated }) {
   );
 }
 
+
+// --- AddFromCompetitionModal (auto-link fixtures to matches via external_fixture_id) ---
+function AddFromCompetitionModal({ competitions = [], onClose, onCreated }) {
+  const [leagueId, setLeagueId] = useState("307");
+  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState([]);
+  const [q, setQ] = useState("");
+  const [addingId, setAddingId] = useState(null);
+
+  // IDs of fixtures already added to the prediction matches list.
+  const [existingFixtureIds, setExistingFixtureIds] = useState(() => new Set());
+
+  // "fd:560542" and 560542 become the same key: "560542".
+  const fixtureKey = (value) =>
+    String(value ?? "").trim().replace(/^[^:]+:/, "");
+
+  const load = async () => {
+    if (!leagueId) return;
+    setLoading(true);
+    try {
+            const season = Number(leagueId) === 2 ? 2025 : 2026;
+      const { data } = await api.get(`/competitions/${leagueId}/matches?season=${season}`);
+      const list = Array.isArray(data) ? data : (data?.items || []);
+      setItems(list);
+
+      // Load existing prediction matches once, to disable fixtures already added.
+      try {
+        const { data: matchesData } = await api.get("/matches");
+        const savedMatches = Array.isArray(matchesData)
+          ? matchesData
+          : (matchesData?.items || matchesData?.matches || []);
+
+        const ids = new Set(
+          savedMatches
+            .map((m) => fixtureKey(m?.external_fixture_id ?? m?.fixture_id))
+            .filter(Boolean)
+        );
+
+        setExistingFixtureIds(ids);
+      } catch (matchesError) {
+        // Backend still prevents duplicates; this only affects the visual button state.
+        console.warn("Could not load already-added fixtures:", matchesError);
+      }
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leagueId]);
+
+  const addFixture = async (fx) => {
+    const key = fixtureKey(fx?.fixture_id);
+
+    // Visual protection. Backend also prevents duplicate inserts.
+    if (!key || existingFixtureIds.has(key)) {
+      return;
+    }
+
+    setAddingId(fx.fixture_id);
+    try {
+      await api.post("/matches", {
+        home_team:
+          fx?.teams?.home?.code ||
+          (fx?.teams?.home?.id != null
+            ? `fd:${fx.teams.home.id}`
+            : ""),
+        away_team:
+          fx?.teams?.away?.code ||
+          (fx?.teams?.away?.id != null
+            ? `fd:${fx.teams.away.id}`
+            : ""),
+        match_date: String(fx?.kickoff_utc || "").slice(0, 10),
+        kickoff: fx?.kickoff_utc,
+        competition: fx?.league?.name_ar || fx?.league?.name || "competition",
+
+        // بيانات البطولة — ضرورية لربط المباراة بتبويب الدوري في صفحة التوقعات
+        league_id: fx?.league?.id != null ? Number(fx.league.id) : null,
+        league_name_en: fx?.league?.name || null,
+        league_name_ar: fx?.league?.name_ar || null,
+        league_logo: fx?.league?.logo || null,
+        season: fx?.league?.season != null ? Number(fx.league.season) : null,
+
+        stage: fx?.league?.round_ar || fx?.league?.round_en || String(fx?.league?.round || ""),
+        round_en: fx?.league?.round || fx?.league?.round_en || null,
+        round_ar: fx?.league?.round_ar || null,
+        group_name: null,
+
+
+        home_team_name_ar: fx?.teams?.home?.name_ar,
+        home_team_name_en: fx?.teams?.home?.name_en || fx?.teams?.home?.name,
+        home_team_logo: fx?.teams?.home?.logo,
+        away_team_name_ar: fx?.teams?.away?.name_ar,
+        away_team_name_en: fx?.teams?.away?.name_en || fx?.teams?.away?.name,
+        away_team_logo: fx?.teams?.away?.logo,
+
+        // أهم حقل للربط مع تبويب البطولات:
+        external_fixture_id: fx?.fixture_id != null ? String(fx.fixture_id) : "", // دائمًا String حسب MatchCreate
+      });
+
+      setExistingFixtureIds((previous) => {
+        const next = new Set(previous);
+        next.add(key);
+        return next;
+      });
+
+      toast.success("تمت إضافة المباراة للتوقع");
+      onCreated?.();
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setAddingId(null);
+    }
+  };
+
+  const filtered = items.filter((fx) => {
+    const s = q.trim().toLowerCase();
+    if (!s) return true;
+
+    const h = (fx?.teams?.home?.name_ar || fx?.teams?.home?.name || "").toLowerCase();
+    const a = (fx?.teams?.away?.name_ar || fx?.teams?.away?.name || "").toLowerCase();
+    const r = (fx?.league?.round_ar || fx?.league?.round_en || "").toLowerCase();
+
+    return h.includes(s) || a.includes(s) || r.includes(s);
+  });
+
+  // ترتيب مباريات الدوري السعودي من الجولة الأولى تصاعديًا
+  // ID الدوري السعودي في API-Football = 307
+  const displayedItems = [...filtered].sort((a, b) => {
+    if (Number(leagueId) !== 307) {
+      return 0;
+    }
+
+    const getRoundNumber = (fx) => {
+      const round =
+        fx?.league?.round ||
+        fx?.league?.round_en ||
+        fx?.league?.round_ar ||
+        "";
+
+      const match = String(round).match(/(\d+)/);
+
+      return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+    };
+
+    const roundA = getRoundNumber(a);
+    const roundB = getRoundNumber(b);
+
+    if (roundA !== roundB) {
+      return roundA - roundB;
+    }
+
+    // داخل نفس الجولة: ترتيب حسب موعد المباراة
+    const timeA = new Date(a?.kickoff_utc || 0).getTime();
+    const timeB = new Date(b?.kickoff_utc || 0).getTime();
+
+    return (
+      (Number.isFinite(timeA) ? timeA : Number.MAX_SAFE_INTEGER) -
+      (Number.isFinite(timeB) ? timeB : Number.MAX_SAFE_INTEGER)
+    );
+  });
+
+  return (
+    <Modal onClose={onClose} title="إضافة مباراة من البطولات" testId="add-from-competition-modal">
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField label="اختر البطولة">
+            <select
+              value={leagueId}
+              onChange={(e) => setLeagueId(Number(e.target.value))}
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white focus:border-gold outline-none"
+            >
+              {competitions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name_ar || c.name_en || c.id}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          <FormField label="بحث">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="اسم فريق / الجولة..."
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-white focus:border-gold outline-none"
+            />
+          </FormField>
+        </div>
+
+        <div className="flex items-center justify-between text-sm text-zinc-400">
+          <div>
+            عدد المباريات: <span className="text-white font-bold">{filtered.length}</span>
+          </div>
+          <button
+            onClick={load}
+            disabled={loading}
+            className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white font-bold disabled:opacity-60"
+          >
+            {loading ? "جاري التحميل..." : "تحديث القائمة"}
+          </button>
+        </div>
+
+        <div className="max-h-[55vh] overflow-auto border border-white/10 rounded-xl">
+          <table
+            className="
+              w-full
+              table-fixed
+              text-sm
+              border-collapse
+            "
+            dir="rtl"
+          >
+            <thead className="sticky top-0 bg-black/60 backdrop-blur border-b border-white/10">
+              <tr>
+                <th className="text-center p-2 sm:p-3 w-[43%]">
+                  المباراة
+                </th>
+                <th className="text-center p-2 sm:p-3 w-[22%]">
+                  الوقت
+                </th>
+                <th className="text-center p-2 sm:p-3 w-[13%]">
+                  الجولة
+                </th>
+                <th className="text-center p-1 sm:p-3 w-[22%]">
+                  إجراء
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayedItems.map((fx) => (
+                <tr key={fx.fixture_id} className="border-b border-white/5">
+                  <td className="p-2 sm:p-3 align-middle overflow-hidden">
+                    <div
+                      dir="rtl"
+                      className="
+                        flex
+                        flex-col
+                        items-center
+                        justify-center
+                        gap-2
+                        w-full
+                        max-w-full
+                        overflow-hidden
+                        text-center
+                      "
+                    >
+                      <div
+                        className="
+                          w-full
+                          rounded-xl
+                          border border-white/10
+                          bg-white/[0.04]
+                          px-2
+                          py-1.5
+                          text-[12px]
+                          sm:px-3
+                          sm:py-2
+                          sm:text-[15px]
+                          font-black
+                          text-white
+                          leading-[1.9]
+                          whitespace-normal
+                          break-words
+                        "
+                        style={{
+                          wordBreak: "normal",
+                          overflowWrap: "break-word",
+                          letterSpacing: "normal",
+                          wordSpacing: "normal",
+                        }}
+                      >
+                        {fx?.teams?.home?.name_ar ||
+                          fx?.teams?.home?.name ||
+                          "الفريق المضيف"}
+                      </div>
+
+                      <div className="flex items-center justify-center gap-2 text-zinc-500">
+                        <span className="h-px w-5 bg-white/10" />
+
+                        <span
+                          className="
+                            rounded-full
+                            border border-white/10
+                            bg-white/5
+                            px-2.5
+                            py-0.5
+                            text-[10px]
+                            font-black
+                          "
+                        >
+                          ضد
+                        </span>
+
+                        <span className="h-px w-5 bg-white/10" />
+                      </div>
+
+                      <div
+                        className="
+                          w-full
+                          rounded-xl
+                          border border-white/10
+                          bg-white/[0.04]
+                          px-2
+                          py-1.5
+                          text-[12px]
+                          sm:px-3
+                          sm:py-2
+                          sm:text-[15px]
+                          font-black
+                          text-white
+                          leading-[1.9]
+                          whitespace-normal
+                          break-words
+                        "
+                        style={{
+                          wordBreak: "normal",
+                          overflowWrap: "break-word",
+                          letterSpacing: "normal",
+                          wordSpacing: "normal",
+                        }}
+                      >
+                        {fx?.teams?.away?.name_ar ||
+                          fx?.teams?.away?.name ||
+                          "الفريق الضيف"}
+                      </div>
+                    </div>
+                    <div className="mt-1 truncate text-[9px] text-zinc-600">{fx.fixture_id}</div>
+                  </td>
+                  <td className="
+                    p-1.5
+                    sm:p-3
+                    text-center
+                    text-zinc-300
+                    align-middle
+                    overflow-hidden
+                  ">
+                    <div
+                      className="
+                        text-[9px]
+                        sm:text-[12px]
+                        leading-[1.6]
+                        break-words
+                        whitespace-normal
+                        overflow-hidden
+                      "
+                    >
+                      {fx.kickoff_utc}
+                    </div>
+                  </td>
+                  <td className="
+                    p-1.5
+                    sm:p-3
+                    text-center
+                    text-zinc-300
+                    align-middle
+                    overflow-hidden
+                  ">
+                    <div
+                      className="
+                        text-[9px]
+                        sm:text-[12px]
+                        leading-[1.6]
+                        break-words
+                        whitespace-normal
+                      "
+                    >
+                      {fx?.league?.round_ar ||
+                        fx?.league?.round_en ||
+                        fx?.league?.round ||
+                        "—"}
+                    </div>
+                  </td>
+                  <td className="p-1 sm:p-3 text-center align-middle overflow-hidden">
+                    {(() => {
+                      const isAdded = existingFixtureIds.has(fixtureKey(fx.fixture_id));
+                      const isAdding = addingId === fx.fixture_id;
+
+                      return (
+                        <button
+                          onClick={() => addFixture(fx)}
+                          disabled={loading || isAdded || isAdding}
+                          className={
+                            isAdded
+                              ? "w-full max-w-[92px] mx-auto px-1.5 py-2 sm:px-3 sm:py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-[9px] sm:text-xs text-emerald-400 font-bold leading-tight cursor-not-allowed"
+                              : "w-full max-w-[92px] mx-auto px-1.5 py-2 sm:px-3 sm:py-2 rounded-lg bg-gold text-black text-[9px] sm:text-xs font-black leading-tight hover:bg-yellow-400 disabled:opacity-60"
+                          }
+                        >
+                          {isAdded
+                            ? "مضافة بالفعل"
+                            : isAdding
+                              ? "جاري الإضافة..."
+                              : "إضافة للتوقع"}
+                        </button>
+                      );
+                    })()}
+                  </td>
+                </tr>
+              ))}
+              {!loading && displayedItems.length === 0 && (
+                <tr>
+                  <td className="p-4 text-zinc-400" colSpan={4}>
+                    لا توجد مباريات
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full py-3 rounded-lg border border-white/10 text-white hover:bg-white/5 font-bold"
+        >
+          إغلاق
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 function ResultModal({ match, onClose, onSaved }) {
   const [h, setH] = useState(match.home_score ?? 0);
   const [a, setA] = useState(match.away_score ?? 0);
@@ -1482,6 +2060,10 @@ function ResultModal({ match, onClose, onSaved }) {
       onSaved();
       onClose();
     } catch (e) {
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     } finally {
       setSaving(false);
@@ -1723,6 +2305,10 @@ function PredictionsTab({ matches, teams }) {
       setRows(data.items || []);
       setCount(data.count || 0);
     } catch (e) {
+      console.log("ADD MATCH ERROR:", e);
+      console.log("MESSAGE:", e?.message);
+      console.log("STATUS:", e?.response?.status);
+      console.log("DATA:", e?.response?.data);
       toast.error(apiErrorMessage(e));
     } finally {
       setLoading(false);
@@ -1851,11 +2437,11 @@ function PredictionRow({ row, teamsMap }) {
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2 text-xs">
-          {home && <Flag code={home.code} size="w-5 h-3.5" />}
+          {home && <TeamLogo team={home} size="w-7 h-7" />}
           <span className="font-bold">{home?.name_ar || m.home_team || "—"}</span>
           <span className="text-zinc-500">ضد</span>
           <span className="font-bold">{away?.name_ar || m.away_team || "—"}</span>
-          {away && <Flag code={away.code} size="w-5 h-3.5" />}
+          {away && <TeamLogo team={away} size="w-7 h-7" />}
         </div>
       </td>
       <td className="px-4 py-3 font-bold text-gold tabular-nums">

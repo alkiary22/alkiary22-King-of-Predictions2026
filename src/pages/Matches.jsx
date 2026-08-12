@@ -9,6 +9,7 @@ import { useContent } from "../context/ContentContext";
 import { Link } from "react-router-dom";
 import { Calendar, Lock, Trophy, Loader2, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { prefetchData } from "../hooks/usePrefetch";
 
 
 const TEAM_MAP_CACHE = {};
@@ -178,8 +179,34 @@ useEffect(() => {
     ).sort();
   }, [matches, competition]);
 
-  const handlePredictionSaved = (pred) => {
-    setPredictions((prev) => ({ ...prev, [pred.match_id]: pred }));
+  const handlePredictionSaved = (response) => {
+    // API قد يرجع التوقع مباشرة أو داخل prediction/data.
+    const pred =
+      response?.prediction ||
+      response?.data?.prediction ||
+      response?.data ||
+      response;
+
+    if (!pred || !pred.match_id) {
+      console.error("Invalid prediction response:", response);
+      return;
+    }
+
+    const predictionKey = String(pred.match_id);
+
+    // تحديث الواجهة فورًا بدون Refresh.
+    // نخزن بالمفتاح النصي حتى تتطابق المفاتيح دائمًا.
+    setPredictions((prev) => ({
+      ...prev,
+      [predictionKey]: {
+        ...prev[predictionKey],
+        ...pred,
+        match_id: pred.match_id,
+        home_score: Number(pred.home_score),
+        away_score: Number(pred.away_score),
+      },
+    }));
+
     refreshUser?.();
   };
 
@@ -212,7 +239,9 @@ useEffect(() => {
             الكل
           </button>
 
-          {competitions.map((item) => {
+          {competitions
+          .filter((item) => Number(item.id) !== 1)
+          .map((item) => {
             const value =
               Number(item.id) === 1
                 ? "worldcup"
@@ -237,7 +266,7 @@ useEffect(() => {
               >
                 <div className="flex items-center justify-center gap-2">
                   {item.logo && (
-                    <img
+                    <img referrerPolicy="no-referrer" loading="lazy"
                       src={item.logo}
                       alt=""
                       className="w-7 h-7 object-contain"
@@ -410,14 +439,19 @@ function MatchCard({ match, teamsMap, prediction, canPredict, onSaved }) {
   }, [match.kickoff]);
   const locked = isFinished || kickoffPast;
 
-  const [home_score, setHome] = useState(prediction?.home_score ?? "");
+  // ضمان ظهور التوقع فورًا حتى لو تغير شكل المفتاح.
+  const livePrediction = prediction || null;
+
+  const [home_score, setHome] = useState(livePrediction?.home_score ?? "");
   const [away_score, setAway] = useState(prediction?.away_score ?? "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setHome(prediction?.home_score ?? "");
-    setAway(prediction?.away_score ?? "");
-  }, [prediction]);
+    if (!livePrediction) return;
+
+    setHome(livePrediction.home_score ?? "");
+    setAway(livePrediction.away_score ?? "");
+  }, [livePrediction]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -433,7 +467,10 @@ function MatchCard({ match, teamsMap, prediction, canPredict, onSaved }) {
         away_score: Number(away_score),
       });
       toast.success("تم حفظ التوقع");
-      onSaved(data);
+
+      // إرسال الاستجابة كاملة إلى الأب ليتم استخراج prediction
+      // مهما كان شكل استجابة API.
+      onSaved?.(data);
     } catch (e) {
       toast.error(apiErrorMessage(e));
     } finally {
@@ -563,12 +600,54 @@ function MatchCard({ match, teamsMap, prediction, canPredict, onSaved }) {
   );
 }
 
+function getTeamLogo(team) {
+  const code = String(team?.code || "").trim();
+
+  // فرق API-Football عندك تحمل كودًا مثل af:529.
+  // نستخدم رابط الشعار الصحيح مباشرة من API-Sports.
+  const apiFootball = code.match(/^af:(\\d+)$/i);
+  if (apiFootball) {
+    return `https://media.api-sports.io/football/teams/${apiFootball[1]}.png`;
+  }
+
+  // للمصادر الأخرى مثل fd: نستخدم الرابط المخزن في بيانات الفريق.
+  return team?.logo || "";
+}
+
 function TeamSide({ team }) {
+  const logo = getTeamLogo(team);
+  const [imageError, setImageError] = useState(false);
+
+  // إذا تغيّر الفريق أو الرابط، أعد محاولة عرض الشعار.
+  useEffect(() => {
+    setImageError(false);
+  }, [logo]);
+
   if (!team) return <div className="flex-1 h-12" />;
+
+  const teamName = team.name_ar || team.name_en || team.code || "فريق";
+
   return (
-    <div className="flex-1 flex flex-col items-center gap-2 text-center">
-      <Flag code={team.code} size="w-12 h-9" />
-      <span className="text-sm font-bold leading-tight">{team.name_ar}</span>
+    <div className="flex-1 flex flex-col items-center gap-2 text-center min-w-0">
+      {logo && !imageError ? (
+        <img
+          src={logo}
+          alt={teamName}
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          onError={() => setImageError(true)}
+          className="w-14 h-14 object-contain shrink-0"
+        />
+      ) : (
+        <div
+          aria-label={teamName}
+          className="w-14 h-14 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-gold font-black text-xl shrink-0"
+        >
+          {String(teamName).trim().charAt(0) || "؟"}
+        </div>
+      )}
+
+      <span className="text-sm font-bold leading-tight">{teamName}</span>
     </div>
   );
 }

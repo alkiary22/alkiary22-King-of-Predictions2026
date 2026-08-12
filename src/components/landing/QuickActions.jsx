@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { FEATURES } from "../../config/flags";
 import {
   CalendarDays,
   Crown,
@@ -32,6 +33,18 @@ const actions = [
     color: "bg-purple-500/15 text-purple-400",
   },
 ];
+
+
+// 🔒 التحدي مغلق مؤقتاً
+const __handleChallengeClick = (e) => {
+  if (!FEATURES.challengeEnabled) {
+    e.preventDefault();
+    e.stopPropagation();
+    alert("🔒 التحدي مغلق مؤقتاً");
+    return false;
+  }
+  return true;
+};
 
 export default function QuickActions() {
   return (

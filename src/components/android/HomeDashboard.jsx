@@ -4,234 +4,295 @@ import {
   CalendarDays,
   Radio,
   Trophy,
-  Clock
+  Clock,
+  ChevronLeft,
+  Flame,
+  CheckCircle2
 } from "lucide-react";
 
 import api from "../../lib/api";
-import Flag from "../../components/Flag";
 import Countdown from "../Countdown";
 
-function TeamSide({ team }) {
+const COMPETITION_NAMES = {
+  worldcup: "كأس العالم 2026",
+  world_cup: "كأس العالم 2026",
+  laliga: "الدوري الإسباني",
+  epl: "الدوري الإنجليزي",
+  saudi: "الدوري السعودي",
+  seriea: "الدوري الإيطالي",
+  bundesliga: "الدوري الألماني",
+  ligue1: "الدوري الفرنسي",
+  ucl: "دوري أبطال أوروبا",
+  uel: "الدوري الأوروبي",
+};
+
+function getTeamLogo(team) {
+  const code = String(team?.code || "").trim();
+
+  // API-Football: af:529 => API-Sports official team logo.
+  const apiFootball = code.match(/^af:(\d+)$/i);
+  if (apiFootball) {
+    return `https://media.api-sports.io/football/teams/${apiFootball[1]}.png`;
+  }
+
+  // Use stored logo first for other sources.
+  if (team?.logo) {
+    return team.logo;
+  }
+
+  // Football-Data fallback: fd:57 => crest.
+  const footballData = code.match(/^fd:(\d+)$/i);
+  if (footballData) {
+    return `https://crests.football-data.org/${footballData[1]}.png`;
+  }
+
+  return "";
+}
+
+function formatKickoff(iso) {
+  try {
+    const date = new Date(iso);
+
+    const day = date.toLocaleDateString("ar-EG-u-nu-latn", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      timeZone: "Asia/Riyadh",
+    });
+
+    const time = date.toLocaleTimeString("ar-EG-u-nu-latn", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Riyadh",
+    });
+
+    return `${day} · ${time} مكة`;
+  } catch {
+    return "";
+  }
+}
+
+function competitionLabel(match) {
   return (
-    <div className="flex flex-col items-center gap-1 w-28">
+    match?.competition_name ||
+    match?.league_name_ar ||
+    match?.league_name ||
+    COMPETITION_NAMES[match?.competition] ||
+    match?.competition ||
+    "مباراة قادمة"
+  );
+}
 
-      <Flag code={team?.code} size="w-10 h-8" />
+function TeamSide({ team }) {
+  const logo = getTeamLogo(team);
+  const [imageError, setImageError] = useState(false);
 
-      <div className="text-center text-white font-bold text-sm">
-        {team?.name_ar || team?.name || "-"}
+  useEffect(() => {
+    setImageError(false);
+  }, [logo]);
+
+  const teamName =
+    team?.name_ar ||
+    team?.name_en ||
+    team?.name ||
+    team?.code ||
+    "بانتظار الفريق";
+
+  return (
+    <div className="home-team-side">
+      <div className="home-team-logo-wrap">
+        {logo && !imageError ? (
+          <img
+            src={logo}
+            alt={teamName}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            onError={() => setImageError(true)}
+            className="home-team-logo"
+          />
+        ) : (
+          <div className="home-team-logo-fallback">
+            {String(teamName).trim().charAt(0) || "؟"}
+          </div>
+        )}
       </div>
 
+      <div className="home-team-name">{teamName}</div>
     </div>
   );
 }
 
-export default function HomeDashboard(){
+export default function HomeDashboard() {
+  const [matches, setMatches] = useState([]);
+  const [teamsMap, setTeamsMap] = useState({});
 
-const [matches,setMatches]=useState([]);
-const [teamsMap,setTeamsMap]=useState({});
+  useEffect(() => {
+    let mounted = true;
 
-useEffect(()=>{
+    Promise.all([api.get("/teams"), api.get("/matches")])
+      .then(([teamsRes, matchesRes]) => {
+        if (!mounted) return;
 
-Promise.all([
-api.get("/teams"),
-api.get("/matches")
-]).then(([teamsRes,matchesRes])=>{
+        const map = {};
+        const teams = Array.isArray(teamsRes.data) ? teamsRes.data : [];
 
-const tm={};
+        teams.forEach((team) => {
+          if (team?.code) map[team.code] = team;
+        });
 
-teamsRes.data.forEach(t=>{
-tm[t.code]=t;
-});
+        const matchList = Array.isArray(matchesRes.data) ? matchesRes.data : [];
 
-setTeamsMap(tm);
+        setTeamsMap(map);
+        setMatches(
+          [...matchList].sort(
+            (a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()
+          )
+        );
+      })
+      .catch((error) => {
+        console.warn("Failed to load home dashboard:", error);
+      });
 
-setMatches(
-matchesRes.data.sort(
-(a,b)=>
-new Date(a.kickoff)-new Date(b.kickoff)
-)
-);
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-}).catch(()=>{});
+  const nextMatch = useMemo(() => {
+    const now = Date.now();
 
-},[]);
+    return matches.find((match) => {
+      const kickoff = new Date(match.kickoff).getTime();
+      return Number.isFinite(kickoff) && kickoff > now && match.status !== "finished";
+    });
+  }, [matches]);
 
-const nextMatch=useMemo(()=>{
+  const home = nextMatch
+    ? teamsMap[nextMatch.home_team] || {
+        code: nextMatch.home_team,
+        name_ar: nextMatch.home_team_name,
+      }
+    : null;
 
-const now=Date.now();
+  const away = nextMatch
+    ? teamsMap[nextMatch.away_team] || {
+        code: nextMatch.away_team,
+        name_ar: nextMatch.away_team_name,
+      }
+    : null;
 
-return matches.find(
-m=>new Date(m.kickoff).getTime()>now
-);
+  const isLive = nextMatch?.status === "live";
+  const isFinished = nextMatch?.status === "finished";
 
-},[matches]);
+  return (
+    <section className="home-dashboard" aria-label="لوحة المباراة القادمة">
+      <article className="home-next-match">
+        <div className="home-match-topline">
+          <div className="home-match-title">
+            <span className="home-match-title-icon">⚽</span>
+            <div>
+              <p>استعد للتوقع</p>
+              <h2>المباراة القادمة</h2>
+            </div>
+          </div>
 
-const home=nextMatch
-?teamsMap[nextMatch.home_team]
-:null;
+          {nextMatch ? (
+            isFinished ? (
+              <span className="home-match-state is-finished">
+                <CheckCircle2 className="w-4 h-4" />
+                انتهت
+              </span>
+            ) : isLive ? (
+              <span className="home-match-state is-live">
+                <span className="home-live-dot" />
+                مباشر
+              </span>
+            ) : (
+              <div className="home-match-countdown">
+                <Countdown kickoff={nextMatch.kickoff} />
+              </div>
+            )
+          ) : null}
+        </div>
 
-const away=nextMatch
-?teamsMap[nextMatch.away_team]
-:null;
+        {nextMatch ? (
+          <>
+            <div className="home-match-teams">
+              <TeamSide team={home} />
 
-return(
+              <div className="home-match-center">
+                {isFinished || isLive ? (
+                  <div className="home-match-score">
+                    {nextMatch.home_score} - {nextMatch.away_score}
+                  </div>
+                ) : (
+                  <div className="home-versus">VS</div>
+                )}
 
-<section className="max-w-md mx-auto px-4 -mt-4 mb-4 space-y-4">
+                <div className="home-competition-pill">
+                  {competitionLabel(nextMatch)}
+                </div>
+              </div>
 
-<div className="rounded-2xl border border-gold/20 bg-black/40 backdrop-blur p-5">
+              <TeamSide team={away} />
+            </div>
 
-<div className="flex items-center justify-around mb-4">
+            <div className="home-match-details">
+              <Clock className="w-4 h-4" />
+              <span>{formatKickoff(nextMatch.kickoff)}</span>
+            </div>
 
-<h2 className="text-white font-black text-sm">
-⚽ المباراة القادمة
-</h2>
+            <Link
+              to={`/matches#match-${nextMatch.id}`}
+              className="home-predict-button"
+            >
+              <Flame className="w-5 h-5" />
+              <span>{isFinished ? "عرض تفاصيل المباراة" : "توقع الآن"}</span>
+              <ChevronLeft className="w-5 h-5" />
+            </Link>
+          </>
+        ) : (
+          <div className="home-no-match">
+            <CalendarDays className="w-8 h-8 text-gold" />
+            <strong>لا توجد مباريات قادمة حاليًا</strong>
+            <span>تابع صفحة المباريات لمعرفة الجدول الجديد.</span>
+          </div>
+        )}
+      </article>
 
-{nextMatch && (
-nextMatch.status==="finished" ? (
+      <div className="home-quick-grid">
+        <Link to="/matches" className="home-quick-action">
+          <span className="home-quick-icon">
+            <CalendarDays className="w-5 h-5" />
+          </span>
+          <span>
+            <strong>المباريات</strong>
+            <small>توقعاتك القادمة</small>
+          </span>
+        </Link>
 
-<div className="px-3 py-1 rounded-full bg-green-600 text-white text-sm font-black">
-✅ انتهت
-</div>
+        <Link to="/user-predictions" className="home-quick-action">
+          <span className="home-quick-icon">
+            <Radio className="w-5 h-5" />
+          </span>
+          <span>
+            <strong>توقعاتي</strong>
+            <small>نتائجك ونقاطك</small>
+          </span>
+        </Link>
+      </div>
 
-) : nextMatch.status==="live" ? (
-
-<div className="px-3 py-1 rounded-full bg-red-600 animate-pulse text-white text-sm font-black">
-🔴 مباشر
-</div>
-
-) : (
-
-<Countdown kickoff={nextMatch.kickoff}/>
-
-)
-)}
-
-</div>
-
-{nextMatch ? (
-
-<>
-
-<div className="flex items-center justify-around">
-
-<TeamSide team={home}/>
-
-<div className="flex flex-col items-center gap-1">
-
-<div className="text-center">
-
-{nextMatch?.status==="finished" || nextMatch?.status==="live" ? (
-
-<div className="text-3xl font-black text-gold">
-{nextMatch.home_score} - {nextMatch.away_score}
-</div>
-
-) : (
-
-<div className="text-lg font-black text-gold">
-VS
-</div>
-
-)}
-
-</div>
-
-<div className="text-xs text-zinc-400 text-center">
-
-{nextMatch.competition_name ||
- (nextMatch.competition==="worldcup" ? "🏆 كأس العالم 2026" : nextMatch.competition) ||
- nextMatch.league_name ||
- "🏆 كأس العالم 2026"}
-
-</div>
-
-<div className="text-[11px] text-zinc-500">
-{
-new Date(nextMatch.kickoff).toLocaleString(
-"ar-EG",
-{
-weekday:"long",
-day:"numeric",
-month:"long",
-hour:"2-digit",
-minute:"2-digit"
+      <Link to="/leaderboard" className="home-leaderboard-link">
+        <span className="home-leaderboard-icon">
+          <Trophy className="w-5 h-5" />
+        </span>
+        <span>
+          <strong>لوحة المتصدرين</strong>
+          <small>اكتشف ترتيبك بين المنافسين</small>
+        </span>
+        <ChevronLeft className="w-5 h-5" />
+      </Link>
+    </section>
+  );
 }
-)
-}
-</div>
-
-</div>
-
-<TeamSide team={away}/>
-
-</div>
-
-
-<Link
-to={`/matches#match-${nextMatch.id}`}
-className="mt-2 w-full flex justify-center rounded-xl bg-gold text-black font-black py-2"
->
-
-توقع الآن
-
-</Link>
-
-</>
-
-) : (
-
-<div className="text-center text-zinc-400 py-8">
-
-لا توجد مباريات قادمة
-
-</div>
-
-)}
-
-</div>
-
-<div className="grid grid-cols-2 gap-3">
-
-<Link
-to="/matches"
-className="inline-flex items-center justify-center gap-2 px-6 py-2 rounded-xl border border-gold/30 bg-black/30 text-white font-bold"
->
-
-<CalendarDays className="w-5 h-5 text-gold"/>
-
-المباريات
-
-</Link>
-
-<Link
-to="/user-predictions"
-className="inline-flex items-center justify-center gap-2 px-6 py-2 rounded-xl border border-gold/30 bg-black/30 text-white font-bold"
->
-
-<Radio className="w-5 h-5 text-gold"/>
-
-التوقعات
-
-</Link>
-
-
-</div>
-
-
-<Link
-to="/leaderboard"
-className="w-full flex items-center justify-center gap-2 rounded-xl bg-gold text-black py-2 font-black"
->
-
-<Trophy className="w-5 h-5"/>
-
-لوحة المتصدرين
-
-</Link>
-
-</section>
-
-);
-
-}
-

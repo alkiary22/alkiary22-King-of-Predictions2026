@@ -1,5 +1,62 @@
 import React, { useEffect, useMemo, useState } from "react";
 
+// ============================================================
+// Team logo helper
+// يدعم أكواد الفرق:
+// fd:586 / af:586 / 586
+// ويستخدم logo المحفوظ كخيار احتياطي.
+// ============================================================
+function getPredictionTeamLogo(team) {
+  if (!team) return "";
+
+  const code = String(
+    team?.code ||
+    team?.team_code ||
+    ""
+  ).trim();
+
+  const idMatch = code.match(/^(?:fd|af):?(\d+)$/i);
+
+  if (idMatch) {
+    return `https://media.api-sports.io/football/teams/${idMatch[1]}.png`;
+  }
+
+  if (/^\d+$/.test(code)) {
+    return `https://media.api-sports.io/football/teams/${code}.png`;
+  }
+
+  return team?.logo || team?.team_logo || "";
+}
+
+function PredictionTeamLogo({ team, name }) {
+  const logo = getPredictionTeamLogo(team);
+
+  if (!logo) {
+    return (
+      <div
+        className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-gold font-black text-sm shrink-0"
+        aria-label={name}
+      >
+        {String(name || "؟").trim().charAt(0) || "؟"}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={logo}
+      alt={name || "الفريق"}
+      referrerPolicy="no-referrer"
+      loading="lazy"
+      onError={(e) => {
+        e.currentTarget.style.display = "none";
+      }}
+      className="w-10 h-10 object-contain shrink-0"
+    />
+  );
+}
+
+
 const TEST_API = "https://king-of-predictions-backend-test.onrender.com/api";
 const REFRESH_SECONDS = 30;
 const CACHE_KEY = "public_predictions_cache";

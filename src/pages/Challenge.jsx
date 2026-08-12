@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import api, { apiErrorMessage } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import SponsorPopup from "../components/SponsorPopup";
+import { FEATURES } from "../config/flags";
 
 const DEFAULT_ROUND32 = [
   { id: "r32_1", date: "الإثنين، 29 يونيو", time: "21:30 مكة", home: { name: "ألمانيا", flag: "🇩🇪" }, away: { name: "باراغواي", flag: "🇵🇾" } },
@@ -400,8 +401,8 @@ function LeaderboardBox({ leaderboard }) {
   );
 }
 
-export default function Challenge() {
-  const { user } = useAuth();
+function ChallengeInner() {
+const { user } = useAuth();
   const isStaff = user?.role === "admin" || user?.role === "supervisor";
 
   const [round32Matches, setRound32Matches] = useState(DEFAULT_ROUND32);
@@ -1108,4 +1109,21 @@ const round32Winners = round32BracketMatches.map((m) => displayR32[m.id]);
       </section>
     </main>
   );
+}
+
+// 🔒 Wrapper: إغلاق التحدي مؤقتاً
+export default function Challenge() {
+  if (!FEATURES.challengeEnabled) {
+    if (typeof window !== "undefined") {
+      if (!window.__challengeLockedAlerted) {
+        window.__challengeLockedAlerted = true;
+        setTimeout(() => {
+          alert("🔒 التحدي مغلق مؤقتاً");
+          window.location.replace("/");
+        }, 100);
+      }
+    }
+    return null;
+  }
+  return <ChallengeInner />;
 }

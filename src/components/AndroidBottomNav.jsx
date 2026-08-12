@@ -1,74 +1,89 @@
-import { NavLink } from "react-router-dom";
-import { Home, Calendar, Crown, Trophy, User } from "lucide-react";
+import React from 'react';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { Crown, Trophy, Target, Home, User } from 'lucide-react-native';
+import { useNavigate } from 'react-router-dom';
+import { FEATURES } from "../config/flags";
+import { prefetchData } from "../hooks/usePrefetch";
 
-const tabs = [
-  { to: "/", label: "الرئيسية", icon: Home },
-  { to: "/matches", label: "المباريات", icon: Calendar },
-  { to: "/challenge", label: "التحدي", icon: Crown, center: true },
-  { to: "/leaderboard", label: "المتصدرون", icon: Trophy },
-  { to: "/profile", label: "حسابي", icon: User },
-];
+const AndroidBottomNav = () => {
+  const navigate = useNavigate();
 
-export default function AndroidBottomNav() {
+  const handleChallengePress = () => {
+    Alert.alert(
+      "🔒 التحدي مغلق مؤقتاً",
+      "سيتم إطلاق التحدي قريباً جداً.\n\nتابعنا ليصلك الإشعار فور الفتح!",
+      [
+        { 
+          text: "حسناً", 
+          style: "default" 
+        }
+      ]
+    );
+  };
+
   return (
-    <div
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999]
-      w-[95%] max-w-md rounded-3xl
-      bg-black/85 backdrop-blur-xl
-      border border-yellow-500/30
-      shadow-2xl shadow-yellow-500/10"
-    >
-      <div className="flex items-center justify-around h-20">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
+    <View className="absolute bottom-0 left-0 right-0 bg-[#0f0f0f] border-t border-white/10 h-16 flex-row items-center justify-around px-2 z-50">
+      
+      <TouchableOpacity onPress={() => navigate('/')} className="items-center flex-1">
+        <Home size={24} color="#888" />
+        <Text className="text-[10px] text-gray-500 mt-1">الرئيسية</Text>
+      </TouchableOpacity>
 
-          return (
-            <NavLink
-              key={tab.to}
-              to={tab.to}
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center transition-all duration-300 ${
-                  tab.center
-                    ? "-mt-8"
-                    : ""
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <div
-                    className={
-                      tab.center
-                        ? `w-16 h-16 rounded-full flex items-center justify-center
-                           ${
-                             isActive
-                               ? "bg-yellow-400 text-black scale-110 shadow-xl"
-                               : "bg-zinc-800 text-yellow-400"
-                           }`
-                        : `w-11 h-11 rounded-xl flex items-center justify-center
-                           ${
-                             isActive
-                               ? "bg-yellow-500/20 text-yellow-400"
-                               : "text-zinc-400"
-                           }`
-                    }
-                  >
-                    <Icon size={22} />
-                  </div>
+      <TouchableOpacity onPress={() => navigate('/leaders')} className="items-center flex-1">
+        <Trophy size={24} color="#888" />
+        <Text className="text-[10px] text-gray-500 mt-1">المتصدرون</Text>
+      </TouchableOpacity>
 
-                  <span
-                    className={`text-[11px] mt-1 ${
-                      isActive ? "text-yellow-400" : "text-zinc-400"
-                    }`}
-                  >
-                    {tab.label}
-                  </span>
-                </>
-              )}
-            </NavLink>
-          );
-        })}
-      </div>
-    </div>
+      {/* زر التحدي - مغلق مؤقتاً */}
+      <TouchableOpacity 
+        onPress={handleChallengePress}
+        className="items-center -mt-8 flex-1"
+      >
+        <View className="bg-gradient-to-br from-yellow-400 to-yellow-600 w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl shadow-yellow-500/50 border-4 border-[#0f0f0f]">
+          <Crown size={34} color="#111" fill="#111" />
+        </View>
+        <Text className="text-xs font-bold text-yellow-400 mt-1 tracking-wider">التحدي</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => navigate('/predictions')} className="items-center flex-1">
+        <Target size={24} color="#888" />
+        <Text className="text-[10px] text-gray-500 mt-1">توقعاتي</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => navigate('/profile')} className="items-center flex-1">
+        <User size={24} color="#888" />
+        <Text className="text-[10px] text-gray-500 mt-1">حسابي</Text>
+      </TouchableOpacity>
+
+    </View>
   );
-}
+};
+
+
+// 🔒 التحدي مغلق مؤقتاً
+const __handleChallengeClick = (e) => {
+  if (!FEATURES.challengeEnabled) {
+    e.preventDefault();
+    e.stopPropagation();
+    alert("🔒 التحدي مغلق مؤقتاً");
+    return false;
+  }
+  return true;
+};
+
+
+// 🚀 Prefetch عند لمس/تمرير على الرابط
+const __prefetchOnHover = (path) => {
+  const map = {
+    "/": "/matches",
+    "/matches": "/matches",
+    "/leaderboard": "/leaderboard?period=weekly",
+    "/leaders": "/leaderboard?period=weekly",
+    "/competitions": "/competitions",
+    "/tournaments": "/competitions",
+  };
+  const endpoint = map[path];
+  if (endpoint) prefetchData(endpoint);
+};
+
+export default AndroidBottomNav;

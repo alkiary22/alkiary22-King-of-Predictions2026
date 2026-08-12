@@ -202,6 +202,22 @@ export default function CompetitionGrid() {
 
     const id = competition.apiLeagueId || competition.id;
 
+    // 🚀 تحميل مباريات الدوري مسبقًا
+    prefetch(
+      `matches:${id}:${season}`,
+      async () => (
+        await api.get(`/competitions/${id}/matches?season=${season}`)
+      ).data
+    );
+
+    // 🚀 Prefetch للمباريات (أهم شيء)
+    prefetch(
+      `matches:${id}:${season}`,
+      async () => (
+        await api.get(`/competitions/${id}/matches?season=${season}`)
+      ).data
+    );
+
     prefetch(
       `standings:${id}:${season}`,
       async () => (
@@ -227,48 +243,32 @@ export default function CompetitionGrid() {
 
 
   useEffect(() => {
-
     if (!competitions.length) return;
 
-    const c=competitions[0];
+    // 🚀 Prefetch مباريات كل الدوريات في الخلفية (تدريجياً)
+    competitions.forEach((c, index) => {
+      const season = c.effective_season || c.current_season || c.season || 2026;
+      const id = c.apiLeagueId || c.id;
 
-    const season=
-      c.effective_season||
-      c.current_season||
-      c.season||
-      2026;
+      // تأخير بسيط بين كل طلب لعدم إغراق السيرفر
+      setTimeout(() => {
+        prefetch(
+          `matches:${id}:${season}`,
+          async () => (await api.get(`/competitions/${id}/matches?season=${season}`)).data
+        );
+      }, index * 200);
+    });
 
-    const id=c.apiLeagueId||c.id;
+    // للدوري الأول فقط: حمّل كل التبويبات
+    const c = competitions[0];
+    const season = c.effective_season || c.current_season || c.season || 2026;
+    const id = c.apiLeagueId || c.id;
 
-    prefetch(
-      `matches:${id}:${season}`,
-      async()=>(
-        await api.get(`/competitions/${id}/matches?season=${season}`)
-      ).data
-    );
+    prefetch(`standings:${id}:${season}`, async () => (await api.get(`/competitions/${id}/standings?season=${season}`)).data);
+    prefetch(`teams:${id}:${season}`, async () => (await api.get(`/competitions/${id}/teams?season=${season}`)).data);
+    prefetch(`scorers:${id}:${season}`, async () => (await api.get(`/competitions/${id}/scorers?season=${season}`)).data);
 
-    prefetch(
-      `standings:${id}:${season}`,
-      async()=>(
-        await api.get(`/competitions/${id}/standings?season=${season}`)
-      ).data
-    );
-
-    prefetch(
-      `teams:${id}:${season}`,
-      async()=>(
-        await api.get(`/competitions/${id}/teams?season=${season}`)
-      ).data
-    );
-
-    prefetch(
-      `scorers:${id}:${season}`,
-      async()=>(
-        await api.get(`/competitions/${id}/scorers?season=${season}`)
-      ).data
-    );
-
-  },[competitions]);
+  }, [competitions]);
   const selectedCompetition =
     competitions.find(
       (competition) =>
@@ -377,6 +377,46 @@ export default function CompetitionGrid() {
                   event
                 )
               }
+              onMouseEnter={() => {
+                const season =
+                  competition.effective_season ||
+                  competition.current_season ||
+                  competition.season ||
+                  2026;
+
+                const id =
+                  competition.apiLeagueId ||
+                  competition.id;
+
+                prefetch(
+                  `matches:${id}:${season}`,
+                  async () => (
+                    await api.get(
+                      `/competitions/${id}/matches?season=${season}`
+                    )
+                  ).data
+                );
+              }}
+              onTouchStart={() => {
+                const season =
+                  competition.effective_season ||
+                  competition.current_season ||
+                  competition.season ||
+                  2026;
+
+                const id =
+                  competition.apiLeagueId ||
+                  competition.id;
+
+                prefetch(
+                  `matches:${id}:${season}`,
+                  async () => (
+                    await api.get(
+                      `/competitions/${id}/matches?season=${season}`
+                    )
+                  ).data
+                );
+              }}
               className={`
                 shrink-0
                 h-[62px]

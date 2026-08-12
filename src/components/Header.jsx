@@ -7,6 +7,19 @@ import { useEffect, useState } from "react";
 import api from "../lib/api";
 import NotificationBell from "./NotificationBell";
 import Avatar from "./Avatar";
+import { FEATURES } from "../config/flags";
+
+
+// 🔒 التحدي مغلق مؤقتاً
+const __handleChallengeClick = (e) => {
+  if (!FEATURES.challengeEnabled) {
+    e.preventDefault();
+    e.stopPropagation();
+    alert("🔒 التحدي مغلق مؤقتاً");
+    return false;
+  }
+  return true;
+};
 
 export default function Header() {
   const { user, logout } = useAuth();

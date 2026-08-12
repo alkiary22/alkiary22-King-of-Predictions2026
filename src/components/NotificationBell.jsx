@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { Bell, X, CheckCheck, Trophy, Frown, Clock } from "lucide-react";
 import api from "../lib/api";
 import Flag from "./Flag";
+import TeamLogo from "./TeamLogo";
 
 function timeAgo(iso) {
   try {
@@ -149,11 +150,11 @@ function NotificationItem({ item, teamsMap = {} }) {
             </p>
 
             <div className="flex items-center gap-2 text-xs text-zinc-400 mb-1">
-              {home && <Flag code={home.code} size="w-5 h-3.5" />}
+              {home && <TeamLogo team={home} size="w-7 h-7" />}
               <span>{home?.name_ar || p.home_team}</span>
               <span className="text-gold font-black">ضد</span>
               <span>{away?.name_ar || p.away_team}</span>
-              {away && <Flag code={away.code} size="w-5 h-3.5" />}
+              {away && <TeamLogo team={away} size="w-7 h-7" />}
             </div>
 
             <p className="text-xs text-zinc-500">
@@ -196,13 +197,13 @@ function NotificationItem({ item, teamsMap = {} }) {
               : "للأسف، توقع غير صحيح"}
           </p>
           <div className="flex items-center gap-2 text-xs text-zinc-400 mb-1">
-            {home && <Flag code={home.code} size="w-5 h-3.5" />}
+            {home && <TeamLogo team={home} size="w-7 h-7" />}
             <span>{home?.name_ar || p.home_team}</span>
             <span className="font-bold text-gold">
               {p.home_score} - {p.away_score}
             </span>
             <span>{away?.name_ar || p.away_team}</span>
-            {away && <Flag code={away.code} size="w-5 h-3.5" />}
+            {away && <TeamLogo team={away} size="w-7 h-7" />}
           </div>
           <p className="text-xs text-zinc-500">
             توقعك كان: {p.pred_home}-{p.pred_away}
