@@ -70,6 +70,37 @@ export function AuthProvider({ children }) {
       throw new Error("لم يتم استلام Google ID Token");
     }
 
+    console.log("GOOGLE DEBUG: About to call backend", {
+      baseURL: api.defaults?.baseURL,
+      tokenLength: String(idToken || "").length,
+      tokenPrefix: String(idToken || "").slice(0, 20),
+    });
+
+    // اختبار اتصال WebView بالـ Backend قبل إرسال Firebase ID Token الحقيقي
+    try {
+      const testResponse = await fetch(
+        `${api.defaults.baseURL}/auth/google`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        }
+      );
+
+      const testText = await testResponse.text();
+
+      console.log("GOOGLE DEBUG: Backend fetch status:", testResponse.status);
+      console.log("GOOGLE DEBUG: Backend fetch response:", testText);
+    } catch (fetchError) {
+      console.error("GOOGLE DEBUG: Backend FETCH FAILED:", {
+        message: fetchError?.message,
+        name: fetchError?.name,
+        stack: fetchError?.stack,
+      });
+    }
+
     const { data } = await api.post("/auth/google", {
       id_token: idToken,
     });
