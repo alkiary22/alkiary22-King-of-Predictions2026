@@ -36,18 +36,23 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Prepare current web build for Capacitor
+      - name: Build current web version for Capacitor
         run: |
-          echo "===== USING CURRENT WEB DIST ====="
-          test -f dist/index.html
-
-          rm -rf build
-          cp -r dist build
+          echo "===== BUILDING CURRENT WEB VERSION ====="
+          REACT_APP_BACKEND_URL=https://kingbackend-apk.onrender.com \
+            CI=false npm run build
 
           echo "===== BUILD SIZE ====="
           du -sh build
 
-          echo "===== BUILD INDEX ====="
+          echo "===== VERIFY BACKEND ====="
+          grep -Rao 'https://kingbackend-apk.onrender.com' \
+            build/static/js/*.js | sort -u
+
+          echo "===== VERIFY GOOGLE ID TOKEN ====="
+          grep -Rao 'getIdToken' \
+            build/static/js/*.js | head -10
+
           test -f build/index.html
 
       - uses: actions/setup-java@v4

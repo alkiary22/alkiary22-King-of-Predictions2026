@@ -54,23 +54,15 @@ export function AuthProvider({ children }) {
     if (Capacitor.isNativePlatform()) {
       // Native Android:
       // احصل على Google ID Token مباشرة من Capacitor Firebase.
-      const result = await FirebaseAuthentication.signInWithGoogle();
+      await FirebaseAuthentication.signInWithGoogle();
 
-      idToken =
-        result?.credential?.idToken ||
-        result?.user?.idToken ||
-        result?.idToken ||
-        null;
+      // مهم:
+      // credential.idToken هو Google OAuth ID Token.
+      // الـ Backend يحتاج Firebase ID Token.
+      const firebaseTokenResult =
+        await FirebaseAuthentication.getIdToken({ forceRefresh: true });
 
-      // بعض إصدارات Firebase Authentication قد لا تعيد
-      // الـ token في النتيجة، لذلك نجرب Firebase Web Auth كاحتياط.
-      if (!idToken) {
-        const currentUser = auth.currentUser;
-
-        if (currentUser) {
-          idToken = await currentUser.getIdToken(true);
-        }
-      }
+      idToken = firebaseTokenResult?.token || null;
     } else {
       // Web فقط: لا نغيّر مسار تسجيل الويب.
       const result = await signInWithPopup(auth, googleProvider);
